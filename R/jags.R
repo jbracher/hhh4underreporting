@@ -30,10 +30,10 @@ fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
   inits0 <- list(list(X = round(Y/p), nu_geo = 10, phi = 0.4, kappa = 0.2, psi = 0.1))
   inits <- rep(inits0, n.chains)
 
-  jags(data = dat,
-       parameters.to.save = pars_to_save,
-       inits = inits,
-       n.chains = n.chains, n.iter = n.iter,
-       n.burnin = n.burnin, n.thin = n.thin,
-       model.file = fct_jags, ...)
+  R2jags::jags(data = dat,
+               parameters.to.save = pars_to_save,
+               inits = inits,
+               n.chains = n.chains, n.iter = n.iter,
+               n.burnin = n.burnin, n.thin = n.thin,
+               model.file = fct_jags, ...)
 }
