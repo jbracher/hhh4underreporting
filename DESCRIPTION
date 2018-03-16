@@ -1,0 +1,12 @@
+Package: hhh4underreporting
+Type: Package
+Title: Suite of functions for fitting negative binomial autoregressive models to underreported data
+Version: 0.0.0.0.9001
+Author: Johannes Bracher [aut, cre]
+Maintainer: Johannes Bracher <johannes.bracher@uzh.ch>
+Description: The main purpose of this package is reproducibility of Bracher/Held 2018+
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports: rjags,
+    R2jags
