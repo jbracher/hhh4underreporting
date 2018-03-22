@@ -2,7 +2,7 @@
 generate_ar <- function(nu, phi, kappa, psi, lgt = 100,
                              start = 10, burn_in = 1000){
   generate_ar_seas(nu = nu, phi = phi, kappa = kappa, psi = psi,
-                   n_seas = lgt, start = start, burn_in = 1000)
+                   n_seas = lgt, start = start, burn_in = burn_in)
 }
 
 # function to recover second-order properties
@@ -13,21 +13,21 @@ compute_sop <- function(nu, phi, kappa, psi, p, par_list = NULL){
   }
 
   soc <- list()
-  unthinned <- thinned <- list()
+  X <- Y <- list()
 
-  unthinned$mu <- nu/(1 - phi - kappa)
-  unthinned$sigma2 <- (1 - (phi + kappa)^2 + phi^2)/
-    (1 - (phi + kappa)^2 - psi*phi^2) *(unthinned$mu + unthinned$mu^2*psi)
-  unthinned$g <- phi*(1 - kappa*(phi + kappa))/(1 - (phi + kappa)^2 + phi^2)
-  unthinned$h <- phi + kappa
+  X$mu <- nu/(1 - phi - kappa)
+  X$sigma2 <- (1 - (phi + kappa)^2 + phi^2)/
+    (1 - (phi + kappa)^2 - psi*phi^2) *(X$mu + X$mu^2*psi)
+  X$g <- phi*(1 - kappa*(phi + kappa))/(1 - (phi + kappa)^2 + phi^2)
+  X$h <- phi + kappa
 
-  thinned$mu <- p*unthinned$mu
-  thinned$sigma2 <- p^2*unthinned$sigma2 + p*(1 - p)*unthinned$mu
-  thinned$g <- unthinned$sigma2/(unthinned$sigma2 + (1 - p)/p*unthinned$mu)*unthinned$g
-  thinned$h <- phi + kappa
+  Y$mu <- p*X$mu
+  Y$sigma2 <- p^2*X$sigma2 + p*(1 - p)*X$mu
+  Y$g <- X$sigma2/(X$sigma2 + (1 - p)/p*X$mu)*X$g
+  Y$h <- phi + kappa
 
-  return(list(unthinned = unthinned,
-              thinned = thinned))
+  return(list(X = X,
+              Y = Y))
 }
 
 # function to recover nu, pi, kappa, psi for a given p:
@@ -54,7 +54,7 @@ recover_pars <- function(mu, sigma2, g, h, p = 1, sop_list = NULL){
 }
 
 reparam <- function(nu, phi, kappa, psi, p){
-  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$thinned
+  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$Y
   recover_pars(sop_list = sop)
 }
 
@@ -73,7 +73,7 @@ fit_lik <- function(Y, p, initial = c(log_nu = 4, log_phi = -2, log_kappa = -3, 
 
 lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5){
   # get second order properties:
-  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$thinned
+  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$Y
 
   if(any(unlist(sop) < 0)) return(-Inf)
 
