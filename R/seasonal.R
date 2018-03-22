@@ -66,60 +66,71 @@ stat_var_seas <- function(nu, phi, kappa, psi){
 
 # wrapper: get stationary properties:
 compute_sop_seas <- function(nu, phi, kappa, psi, p){
-  mu_unthinned <- stat_mean_seas(nu, phi, kappa)
-  sigma2_unthinned <- stat_var_seas(nu, phi, kappa, psi)$stat_var_X
+  mu_X <- stat_mean_seas(nu, phi, kappa)
+  sigma2_X <- stat_var_seas(nu, phi, kappa, psi)$stat_var_X
   inds_shifted <- c(length(phi), 1:(length(phi) - 1))
-  cov1_unthinned <- phi*sigma2_unthinned[inds_shifted] +
-    kappa*(sigma2_unthinned[inds_shifted] - mu_unthinned[inds_shifted] - psi[inds_shifted]*mu_unthinned[inds_shifted]^2)/
+  cov1_X <- phi*sigma2_X[inds_shifted] +
+    kappa*(sigma2_X[inds_shifted] - mu_X[inds_shifted] - psi[inds_shifted]*mu_X[inds_shifted]^2)/
     (1 + psi[inds_shifted])
-  decay_unthinned <- phi + kappa
+  decay_X <- phi + kappa
 
-  mu_thinned <- p*mu_unthinned
-  sigma2_thinned <- p^2*sigma2_unthinned + p*(1 - p)*mu_unthinned # hier weitermachen!!! beide Manuskripte ansehen.
-  cov1_thinned <- p^2*cov1_unthinned
-  decay_thinned <- decay_unthinned
+  mu_Y <- p*mu_X
+  sigma2_Y <- p^2*sigma2_X + p*(1 - p)*mu_X # hier weitermachen!!! beide Manuskripte ansehen.
+  cov1_Y <- p^2*cov1_X
+  decay_Y <- decay_X
 
-  return(list(mu_unthinned = mu_unthinned, sigma2_unthinned = sigma2_unthinned,
-              cov1_unthinned = cov1_unthinned, decay_unthinned = decay_unthinned,
-              mu_thinned = mu_thinned, sigma2_thinned = sigma2_thinned,
-              cov1_thinned = cov1_thinned, decay_thinned = decay_thinned))
+  return(list(mu_X = mu_X, sigma2_X = sigma2_X,
+              cov1_X = cov1_X, v_X = sigma2_X, decay_cov_X = decay_X,
+              mu_Y = mu_Y, v_Y = sigma2_Y,
+              cov1_Y = cov1_Y, decay_cov_Y = decay_Y))
 }
 
-# reparametrize to second-order equivalent process without under-reporting
-reparam_seas <- function(nu, phi, kappa, psi, p, resols = 3^-(3:7), lgts = rep(15, 5)){
+
+reparam_seas <- function(nu, phi, kappa, psi, p){
+  L <- length(nu)
 
   if(p == 1) return(list(nu = nu, phi = phi, kappa = kappa, psi = psi, p = 1))
 
-  sp <- compute_sop_seas(nu, phi, kappa, psi, p)
+  target_sop <- compute_sop_seas(nu, phi, kappa, psi, p)
 
-  p_star <- 1
-  nu_star <- nu*p/p_star
+  # now find a completely observed process with the same properties:
+  nu_star <- p*nu # known for theoretical reasons
+  phi_plus_kappa_star <- target_sop$decay_cov_Y # this, too.
+  mu_X_star <- target_sop$mu_Y # by definition
+  v_X_star <- target_sop$v_Y # by definition
+  cov1_X_star <- target_sop$cov1_Y # by definition
+
+  # for the remaining one the old values are ususally good starting values:
   phi_star <- phi
-  kappa_star <- kappa
+  kappa_star <- phi_plus_kappa_star - phi_star
   psi_star <- psi
-  sp_star <- compute_sop_seas(nu_star, phi_star, kappa_star, psi_star, p_star)
 
-  for(r in 1:length(resols)){
-    resol <- resols[r]
-    for(j in 1:lgts[r]){
-      for(i in 1:L){
-        d_phi_star <- ifelse(sp$cov1_thinned[i] > sp_star$cov1_thinned[i], resol, -resol)
-        phi_star[i] <- phi_star[i] + d_phi_star
-        if(phi_star[i] > sp$decay_thinned[i]) phi_star[i] <- sp$decay_thinned[i]
-        kappa_star <- sp$decay_thinned - phi_star
+  # given a starting value of psi[L] we can get var_lambda_star[L]
+  v_lambda_star <- numeric(L)
+  v_lambda_star[L] <- (v_X_star[L] - mu_X_star[L] - psi_star[L]*mu_X_star[L]^2)/
+    (1 + psi_star[L])
 
-        d_psi_star <- ifelse(sp$sigma2_thinned[i] > sp_star$sigma2_thinned[i], resol, -resol)
-        psi_star[i] <- psi_star[i] + d_psi_star
-      }
-      sp_star <- compute_sop_seas(nu_star, phi_star, kappa_star, psi_star, p_star)
-      if(j%%100 == 0) print(j)
+  # now we can iteratively roll through the weeks and correct the values of phi and kappa
+  for(k in 1:2){
+    for(i in 1:L){
+      im1 <- ifelse(i == 1, L, i - 1)
+      # correct phi_star[i]
+      phi_star[i] <- (cov1_X_star[i] - phi_plus_kappa_star[i]*v_lambda_star[im1] -
+                        phi_plus_kappa_star[i]*mu_X_star[im1]^2 -
+                        nu_star[i]*mu_X_star[im1] + mu_X_star[i]*mu_X_star[im1])/
+        (v_X_star[im1] - v_lambda_star[im1])
+      kappa_star[i] <- phi_plus_kappa_star[i] - phi_star[i]
+      # update v_lambda_star:
+      v_lambda_star[i] <- phi_star[i]^2*v_X_star[im1] +
+        (2*phi_star[i]*kappa_star[i] + kappa_star[i]^2)*v_lambda_star[im1]
+      # now correct psi_star[i]
+      psi_star[i] <- (v_X_star[i] - v_lambda_star[i] - mu_X_star[i])/
+        (mu_X_star[i]^2 + v_lambda_star[i])
     }
   }
-
   return(list(nu = nu_star, phi = phi_star, kappa = kappa_star, psi = psi_star, p = 1))
 }
 
-### CONTINUE HERE!!!
 # function for obtaining "shifted" nu necessary for observation-driven formulation
 nu_to_nu_tilde_seas <- function(nu, kappa, max_lag = 5){
   nu_prolonged <- c(tail(nu, max_lag), nu)
@@ -164,12 +175,12 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
 # function for likelihood inference
 fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
                                               alpha_phi = -1, gamma_phi = 0, delta_phi = 0,
-                                              alpha_kappa = -1, psi = -3),
+                                              alpha_kappa = -1, log_psi = -3),
                          max_lag = 10, ...){
 
   if(seas_phi == FALSE){
     initial <- initial[c("alpha_nu", "gamma_nu", "delta_nu",
-                         "alpha_phi", "alpha_kappa", "psi")]
+                         "alpha_phi", "alpha_kappa", "log_psi")]
   }
 
   lik_vect <- function(pars){
@@ -181,7 +192,7 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
     gamma_phi <- ifelse(seas_phi, pars["gamma_phi"], 0)
     delta_phi <- ifelse(seas_phi, pars["delta_phi"], 0)
     alpha_kappa <- pars["alpha_kappa"]
-    psi <- exp(pars["psi"])
+    psi <- exp(pars["log_psi"])
     lik_seas(Y = Y,
              alpha_nu = alpha_nu, gamma_nu = gamma_nu, delta_nu = delta_nu,
              alpha_phi = alpha_phi, gamma_phi = gamma_phi, delta_phi = delta_phi,
