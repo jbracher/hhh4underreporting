@@ -249,7 +249,7 @@ lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
 }
 
 # function to simulate from seasonal model:
-generate_ar_seas <- function(nu, phi, kappa, psi, n_seas = 10,
+generate_ar_seas <- function(nu, phi, kappa, psi, p = 1, n_seas = 10,
                              start = 10, burn_in = 10){
   L <- length(nu)
   lgt <- L*(n_seas + burn_in)
@@ -272,7 +272,10 @@ generate_ar_seas <- function(nu, phi, kappa, psi, n_seas = 10,
     lambda[i] <- nu[ind] + phi[ind]*X[i - 1] + kappa[ind]*lambda[i - 1]
     X[i] <- rnbinom(1, mu = lambda[i], size = 1/psi[ind])
   }
-  list(X = tail(X, lgt - burn_in*L), lambda = tail(lambda, lgt - burn_in*L))
+  X <- tail(X, lgt - burn_in*L)
+  lambda <- tail(lambda, lgt - burn_in*L)
+  Y <- rbinom(lgt - burn_in*L, X, p)
+  list(X = X, lambda = lambda, Y = Y)
 }
 
 # function to get some empirical second order properties
