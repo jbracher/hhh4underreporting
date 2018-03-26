@@ -59,7 +59,7 @@ reparam <- function(nu, phi, kappa, psi, p){
 }
 
 # function to maximize likelihood:
-fit_lik <- function(Y, p, initial = c(log_nu = 4, log_phi = -2, log_kappa = -3, log_psi = 3), max_lag = 5, hessian = FALSE, ...){
+fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, log_psi = 3), max_lag = 5, hessian = FALSE, ...){
   neg_lik_vect <- function(pars){
     # extract parameter values:
     nu <- exp(pars["log_nu"])
@@ -93,7 +93,7 @@ lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = F
     mod_matr[, i] <- c(rep(NA, i), head(Y, lgt - i))
   }
   lin_pred <- nu_star_tilde + mod_matr %*% matrix(phi_star*kappa_star^(1:max_lag - 1), ncol = 1)
-  llik <- dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi, log = TRUE)
+  llik <- dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi_star, log = TRUE)
   if(return_contributions){
     return(llik)
   }else{
