@@ -1,7 +1,7 @@
 # function to simulate from time-homogeneous model (just a wrapper around the seasonal case):
-generate_ar <- function(nu, phi, kappa, psi, lgt = 100,
+generate_ar <- function(nu, phi, kappa, psi, p = 1, lgt = 100,
                              start = 10, burn_in = 1000){
-  generate_ar_seas(nu = nu, phi = phi, kappa = kappa, psi = psi,
+  generate_ar_seas(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p,
                    n_seas = lgt, start = start, burn_in = burn_in)
 }
 
@@ -60,18 +60,19 @@ reparam <- function(nu, phi, kappa, psi, p){
 
 # function to maximize likelihood:
 fit_lik <- function(Y, p, initial = c(log_nu = 4, log_phi = -2, log_kappa = -3, log_psi = 3), max_lag = 5, hessian = FALSE, ...){
-  lik_vect <- function(pars){
+  neg_lik_vect <- function(pars){
     # extract parameter values:
     nu <- exp(pars["log_nu"])
     phi <- exp(pars["log_phi"])
     kappa <- exp(pars["log_kappa"])
     psi <- exp(pars["log_psi"])
-    lik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
+    -1 * lik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
   }
-  optim(par = initial, fn = lik_vect, hessian = hessian, ...)
+  optim(par = initial, fn = neg_lik_vect, hessian = hessian, ...)
 }
 
-lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5){
+
+lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
   # get second order properties:
   sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$Y
 
@@ -92,8 +93,12 @@ lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5){
     mod_matr[, i] <- c(rep(NA, i), head(Y, lgt - i))
   }
   lin_pred <- nu_star_tilde + mod_matr %*% matrix(phi_star*kappa_star^(1:max_lag - 1), ncol = 1)
-  llik <- - sum(dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi, log = TRUE), na.rm = TRUE)
-  return(llik)
+  llik <- dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi, log = TRUE)
+  if(return_contributions){
+    return(llik)
+  }else{
+    return(sum(llik[-(1:max_lag)]))
+  }
 }
 
 emp_sop <- function(Y){
