@@ -141,7 +141,7 @@ nu_to_nu_tilde_seas <- function(nu, kappa, max_lag = 5){
   for(i in 1:length(nu)){
     nu_matr[i, ] <- rev(nu_prolonged[seq(from = i, length.out = max_lag + 1)])
   }
-  weight_matrix <- get_weight_matrix_seas(phi = rep(1, length(nu)), kappa = kappa, max_lag = max_lag + 1)
+  weight_matrix <- get_weight_matrix_seas_cpp(phi = rep(1, length(nu)), kappa = kappa, max_lag = max_lag + 1)
   nu_transformed <- rowSums(weight_matrix*nu_matr)
   return(nu_transformed)
 }
@@ -226,8 +226,8 @@ lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
 
   # extract parameter values over one season:
   vect_t <- seq(from = 0, length.out = L)
-  nu <- exp(alpha_nu + gamma_nu*sin(2*pi*vect_t/52) + delta_nu*cos(2*pi*vect_t/52))
-  phi <- exp(alpha_phi + gamma_phi*sin(2*pi*vect_t/52) + delta_phi*cos(2*pi*vect_t/52))
+  nu <- exp(alpha_nu + gamma_nu*sin(2*pi*vect_t/L) + delta_nu*cos(2*pi*vect_t/L))
+  phi <- exp(alpha_phi + gamma_phi*sin(2*pi*vect_t/L) + delta_phi*cos(2*pi*vect_t/L))
   kappa <- rep(exp(alpha_kappa), L)
   psi <- rep(psi, L)
 
@@ -248,7 +248,7 @@ lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
   nu_star_tilde <- nu_to_nu_tilde_seas(nu = nu_star, kappa = kappa_star, max_lag = max_lag)
 
   # get weight matrix:
-  weight_matrix <- get_weight_matrix_seas(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
+  weight_matrix <- get_weight_matrix_seas_cpp(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
   # paste as appropriate.
   weight_matrix <- weight_matrix[rep(1:L, length.out = lgt), ]
 
