@@ -68,7 +68,15 @@ fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, 
     psi <- exp(pars["log_psi"])
     -1 * lik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
   }
-  optim(par = initial, fn = neg_lik_vect, hessian = hessian, ...)
+  initials <- list(initial,
+                   initial*c(1.5, 1, 1, 1),
+                   initial*c(0.5, 1, 1, 1))
+  opt <- optim(par = initials[[1]], fn = neg_lik_vect, hessian = hessian, ...)
+  for(i in 2:3){
+    opt_temp <- optim(par = initials[[i]], fn = neg_lik_vect, hessian = hessian, ...)
+    if(opt_temp$value < opt$value) opt <- opt_temp
+  }
+  return(opt)
 }
 
 
