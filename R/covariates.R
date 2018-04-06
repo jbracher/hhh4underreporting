@@ -176,7 +176,7 @@ lik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
   llik <- - sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_star[-(1:max_lag)],
-                        log = TRUE))
+                        log = TRUE)[-(1:max_lag)])
   return(llik)
 }
 
