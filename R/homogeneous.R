@@ -86,20 +86,20 @@ reparam <- function(nu, phi, kappa, psi, p){
 #' on the log scale.
 #' @export
 fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, log_psi = 3), max_lag = 5, hessian = FALSE, ...){
-  neg_lik_vect <- function(pars){
+  nllik_vect <- function(pars){
     # extract parameter values:
     nu <- exp(pars["log_nu"])
     phi <- exp(pars["log_phi"])
     kappa <- exp(pars["log_kappa"])
     psi <- exp(pars["log_psi"])
-    -1 * llik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
+    nllik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
   }
   initials <- list(initial,
                    initial*c(1.5, 1, 1, 1),
                    initial*c(0.5, 1, 1, 1))
-  opt <- optim(par = initials[[1]], fn = neg_lik_vect, hessian = hessian, ...)
+  opt <- optim(par = initials[[1]], fn = nllik_vect, hessian = hessian, ...)
   for(i in 2:3){
-    opt_temp <- optim(par = initials[[i]], fn = neg_lik_vect, hessian = hessian, ...)
+    opt_temp <- optim(par = initials[[i]], fn = nllik_vect, hessian = hessian, ...)
     if(opt_temp$value < opt$value) opt <- opt_temp
   }
   return(opt)
@@ -120,7 +120,7 @@ fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, 
 #' log-likelihood contributions.
 #'
 #' @export
-llik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
+nllik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
   # get second order properties:
   sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$Y
 
@@ -141,7 +141,7 @@ llik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = 
     mod_matr[, i] <- c(rep(NA, i), head(Y, lgt - i))
   }
   lin_pred <- nu_star_tilde + mod_matr %*% matrix(phi_star*kappa_star^(1:max_lag - 1), ncol = 1)
-  llik <- dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi_star, log = TRUE)
+  llik <- - dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi_star, log = TRUE)
 
   if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
 }

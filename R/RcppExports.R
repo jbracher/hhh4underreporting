@@ -17,8 +17,8 @@ nu_to_nu_tilde_c_cpp <- function(nu, kappa) {
     .Call('_hhh4underreporting_nu_to_nu_tilde_c_cpp', PACKAGE = 'hhh4underreporting', nu, kappa)
 }
 
-lik_c_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5L) {
-    .Call('_hhh4underreporting_lik_c_cpp', PACKAGE = 'hhh4underreporting', Y, m1, vl1, nu, phi, kappa, psi, p, max_lag)
+nllik_c_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5L) {
+    .Call('_hhh4underreporting_nllik_c_cpp', PACKAGE = 'hhh4underreporting', Y, m1, vl1, nu, phi, kappa, psi, p, max_lag)
 }
 
 timesTwo <- function(x) {

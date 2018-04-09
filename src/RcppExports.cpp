@@ -64,9 +64,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// lik_c_cpp
-double lik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p, int max_lag);
-RcppExport SEXP _hhh4underreporting_lik_c_cpp(SEXP YSEXP, SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP, SEXP max_lagSEXP) {
+// nllik_c_cpp
+double nllik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p, int max_lag);
+RcppExport SEXP _hhh4underreporting_nllik_c_cpp(SEXP YSEXP, SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP, SEXP max_lagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -79,7 +79,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
     Rcpp::traits::input_parameter< int >::type max_lag(max_lagSEXP);
-    rcpp_result_gen = Rcpp::wrap(lik_c_cpp(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag));
+    rcpp_result_gen = Rcpp::wrap(nllik_c_cpp(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -231,7 +231,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_hhh4underreporting_reparam_c_cpp", (DL_FUNC) &_hhh4underreporting_reparam_c_cpp, 7},
     {"_hhh4underreporting_get_weight_matrix_c_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_c_cpp, 3},
     {"_hhh4underreporting_nu_to_nu_tilde_c_cpp", (DL_FUNC) &_hhh4underreporting_nu_to_nu_tilde_c_cpp, 2},
-    {"_hhh4underreporting_lik_c_cpp", (DL_FUNC) &_hhh4underreporting_lik_c_cpp, 9},
+    {"_hhh4underreporting_nllik_c_cpp", (DL_FUNC) &_hhh4underreporting_nllik_c_cpp, 9},
     {"_hhh4underreporting_timesTwo", (DL_FUNC) &_hhh4underreporting_timesTwo, 1},
     {"_hhh4underreporting_back_seas_cpp", (DL_FUNC) &_hhh4underreporting_back_seas_cpp, 3},
     {"_hhh4underreporting_get_weight_matrix_seas_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_seas_cpp, 3},

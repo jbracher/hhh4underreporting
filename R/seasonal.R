@@ -212,7 +212,7 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
     delta_phi <- ifelse(seas_phi, pars["delta_phi"], 0)
     alpha_kappa <- pars["alpha_kappa"]
     psi <- exp(pars["log_psi"])
-    llik_seas(Y = Y,
+    nllik_seas(Y = Y,
              alpha_nu = alpha_nu, gamma_nu = gamma_nu, delta_nu = delta_nu,
              alpha_phi = alpha_phi, gamma_phi = gamma_phi, delta_phi = delta_phi,
              alpha_kappa = alpha_kappa, psi = psi, p = p, L = L, max_lag = max_lag)
@@ -222,13 +222,13 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
                    initial*c(0.5, rep(1, length(initial) - 1)))
   opt <- optim(par = initials[[1]], fn = lik_vect,...)
   for(i in 2:3){
-    opt_temp <- optim(par = initials[[i]], fn = lik_vect, ...)
+    opt_temp <- optim(par = initials[[i]], fn = lik_vect,...)
     if(opt_temp$value < opt$value) opt <- opt_temp
   }
   return(opt)
 }
 
-#' Evaluate the approximate log-likelihood of a seasonal underreported endemic-epidemic model
+#' Evaluate the approximate negative log-likelihood of a seasonal underreported endemic-epidemic model
 #'
 #' The likelihood approximation is based on an approximation of the process by
 #' a second-order equivalent process with complete reporting.
@@ -243,11 +243,11 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
 #' @param return_contributions shall the log-likelihood contributions of each time point be
 #' returned (as vector)?
 #'
-#' @return The log-likelihood as scalar or (if \code{return_contributions == TRUE}) the vector of
-#' log-likelihood contributions.
+#' @return The negative log-likelihood as scalar or (if \code{return_contributions == TRUE}) the vector of
+#' negative log-likelihood contributions.
 #'
 #' @export
-llik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
+nllik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
                      alpha_phi, gamma_phi = 0, delta_phi = 0,
                      alpha_kappa, psi, p, L, max_lag = 5, return_contributions = FALSE){
   lgt <- length(Y)
@@ -288,7 +288,7 @@ llik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
 
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
-  llik <- - dnbinom(Y, mu = lambda, size = rep(1/psi_star, length.out = lgt),
+  llik <- -1*dnbinom(Y, mu = lambda, size = rep(1/psi_star, length.out = lgt),
                         log = TRUE)
   if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
 }

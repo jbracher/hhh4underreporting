@@ -134,7 +134,7 @@ NumericMatrix get_mod_matr_c_cpp(NumericVector Y, int max_lag){
 }
 
 // [[Rcpp::export]]
-double lik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi,
+double nllik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi,
                  NumericVector kappa, NumericVector psi, double p, int max_lag = 5){
   int lgt = Y.size();
   // get model matrix:
@@ -157,15 +157,15 @@ double lik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, Numer
 
   // get conditional means:
   NumericVector lambda(lgt);
-  NumericVector lliks(lgt);
+  NumericVector nlliks(lgt);
   for(int i = 0; i < max_lag; i++){
-    lliks(i) = 0;
+    nlliks(i) = 0;
   }
   for(int i = max_lag; i < lgt; i++){
     lambda(i) = nu_star_tilde(i) + sum(weight_matrix(i,_)*mod_matr(i,_));
-    lliks(i) = dnbinom_mu(Y(i), 1/psi_star(i), lambda(i), true);
+    nlliks(i) = -1*dnbinom_mu(Y(i), 1/psi_star(i), lambda(i), true);
    }
 
-  return -sum(lliks);
+  return sum(nlliks);
 }
 

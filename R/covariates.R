@@ -213,7 +213,7 @@ llik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contr
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
   llik <- dnbinom(Y, mu = lambda, size = 1/psi_star,
-                        log = TRUE)
+                  log = TRUE)
   if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
   return(llik)
 }
@@ -226,7 +226,7 @@ llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 
   # get corresponding parameters for unthinned process:
   pars_star <- reparam_c_cpp(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
-                         kappa = kappa, psi = psi, p = p)
+                             kappa = kappa, psi = psi, p = p)
   m1_star <- pars_star$m1
   vl1_star <- pars_star$vl1
   nu_star <- pars_star$nu
@@ -241,8 +241,8 @@ llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
-  llik <- - sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_star[-(1:max_lag)],
-                        log = TRUE))
+  llik <- sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_star[-(1:max_lag)],
+                      log = TRUE))
   return(llik)
 }
 
@@ -266,21 +266,21 @@ llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 #' @export
 fit_lik_c <- function(Y, p, m1, vl1, covariate,
                       initial = c(alpha_nu = 4, beta_nu = 0,
-                                        alpha_phi = -1,
-                                        alpha_kappa = -1, log_psi = -3),
+                                  alpha_phi = -1,
+                                  alpha_kappa = -1, log_psi = -3),
                       max_lag = 10, ...){
 
-  lik_vect <- function(pars){
+  nllik_vect <- function(pars){
     lgt <- length(Y)
     nu <- exp(pars["alpha_nu"] + pars["beta_nu"]*covariate)
     phi <- rep(exp(pars["alpha_phi"]), lgt)
     kappa <- rep(exp(pars["alpha_kappa"]), lgt)
     psi <- rep(exp(pars["log_psi"]), lgt)
-    llik_c_cpp(Y = Y, m1 = m1, vl1 = vl1,
-          nu = nu, phi = phi, kappa = kappa, psi = psi,
-          p = p, max_lag = max_lag)
+    nllik_c_cpp(Y = Y, m1 = m1, vl1 = vl1,
+                nu = nu, phi = phi, kappa = kappa, psi = psi,
+                p = p, max_lag = max_lag)
   }
 
-  optim(par = initial, fn = lik_vect, ...)
+  optim(par = initial, fn = nllik_vect, ...)
 }
 
