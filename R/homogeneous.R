@@ -59,6 +59,7 @@ reparam <- function(nu, phi, kappa, psi, p){
 }
 
 # function to maximize likelihood:
+#' @export
 fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, log_psi = 3), max_lag = 5, hessian = FALSE, ...){
   neg_lik_vect <- function(pars){
     # extract parameter values:
@@ -79,7 +80,7 @@ fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, 
   return(opt)
 }
 
-
+#' @export
 lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
   # get second order properties:
   sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$Y

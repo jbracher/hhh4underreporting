@@ -147,7 +147,7 @@ nu_to_nu_tilde_c <- function(nu, kappa, max_lag){
   nu_transformed
 }
 
-
+#' @export
 lik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
   lgt <- length(Y)
   # get model matrix:
@@ -207,6 +207,7 @@ lik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 
 
 # function for likelihood inference
+#' @export
 fit_lik_c <- function(Y, p, m1, vl1, covariate,
                       initial = c(alpha_nu = 4, beta_nu = 0,
                                         alpha_phi = -1,

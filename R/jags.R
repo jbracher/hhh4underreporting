@@ -1,3 +1,4 @@
+#' @export
 fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
                      n.burnin = 1000, n.thin = 10, ...){
   # model definition if p != 1

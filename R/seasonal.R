@@ -214,6 +214,7 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
 }
 
 # function to evaluate likelihood
+#' @export
 lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
                      alpha_phi, gamma_phi = 0, delta_phi = 0,
                      alpha_kappa, psi, p, L, max_lag = 5){
