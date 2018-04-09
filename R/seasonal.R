@@ -69,8 +69,8 @@ stat_var_seas <- function(nu, phi, kappa, psi){
 
 # wrapper: get stationary properties:
 compute_sop_seas <- function(nu, phi, kappa, psi, p){
-  mu_X <- stat_mean_seas(nu, phi, kappa)
-  sigma2_X <- stat_var_seas(nu, phi, kappa, psi)$stat_var_X
+  mu_X <- stat_mean_seas_cpp(nu, phi, kappa)
+  sigma2_X <- stat_var_seas_cpp(nu, phi, kappa, psi)$stat_var_X
   inds_shifted <- c(length(phi), 1:(length(phi) - 1))
   cov1_X <- phi*sigma2_X[inds_shifted] +
     kappa*(sigma2_X[inds_shifted] - mu_X[inds_shifted] - psi[inds_shifted]*mu_X[inds_shifted]^2)/
@@ -219,10 +219,11 @@ lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
                      alpha_kappa, psi, p, L, max_lag = 5){
   lgt <- length(Y)
   # get model matrix:
-  mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
-  for(i in 1:max_lag){
-    mod_matr[, i] <- c(rep(NA, i), head(Y, lgt - i))
-  }
+  # mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
+  # for(i in 1:max_lag){
+  #   mod_matr[, i] <- c(rep(NA, i), head(Y, lgt - i))
+  # }
+  mod_matr <- get_mod_matr_cpp(Y = Y, max_lag = max_lag)
 
   # extract parameter values over one season:
   vect_t <- seq(from = 0, length.out = L)
@@ -237,7 +238,7 @@ lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
   if(any(unlist(sop) < 0)) return(-Inf)
 
   # get corresponding parameters for unthinned process:
-  pars_star <- reparam_seas(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)
+  pars_star <- reparam_seas_cpp(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)
   nu_star <- pars_star$nu
   phi_star <- pars_star$phi
   kappa_star <- pars_star$kappa
@@ -245,7 +246,7 @@ lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
 
   # nu_star needs to be transformed to move to the observation-driven formulation
   # of our process
-  nu_star_tilde <- nu_to_nu_tilde_seas(nu = nu_star, kappa = kappa_star, max_lag = max_lag)
+  nu_star_tilde <- nu_to_nu_tilde_seas_cpp(nu = nu_star, kappa = kappa_star, max_lag = max_lag)
 
   # get weight matrix:
   weight_matrix <- get_weight_matrix_seas_cpp(phi = phi_star, kappa = kappa_star, max_lag = max_lag)

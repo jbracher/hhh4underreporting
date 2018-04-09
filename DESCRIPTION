@@ -9,4 +9,7 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 Imports: rjags,
-    R2jags
+    R2jags,
+    Rcpp
+LinkingTo: Rcpp
+RoxygenNote: 6.0.1

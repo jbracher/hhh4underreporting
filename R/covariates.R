@@ -137,8 +137,6 @@ get_weight_matrix_c <- function(phi, kappa, max_lag){
   t(wgts)
 }
 
-get_weight_matrix_c(1:10/10, 1:10/10, 3)
-
 # function for obtaining "shifted" nu necessary for observation-driven formulation
 nu_to_nu_tilde_c <- function(nu, kappa, max_lag){
   lgt <- length(nu)
@@ -176,7 +174,34 @@ lik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
   llik <- - sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_star[-(1:max_lag)],
-                        log = TRUE)[-(1:max_lag)])
+                        log = TRUE))
+  return(llik)
+}
+
+lik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
+  lgt <- length(Y)
+  # get model matrix:
+  mod_matr <- get_mod_matr_cpp(Y = Y, max_lag = max_lag)
+
+  # get corresponding parameters for unthinned process:
+  pars_star <- reparam_c_cpp(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
+                         kappa = kappa, psi = psi, p = p)
+  m1_star <- pars_star$m1
+  vl1_star <- pars_star$vl1
+  nu_star <- pars_star$nu
+  phi_star <- pars_star$phi
+  kappa_star <- pars_star$kappa
+  psi_star <- pars_star$psi
+
+  nu_star_tilde <- nu_to_nu_tilde_c_cpp(nu = nu_star, kappa = kappa_star)
+
+  # get weight matrix:
+  weight_matrix <- get_weight_matrix_c_cpp(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
+
+  # get likelihood:
+  lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
+  llik <- - sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_star[-(1:max_lag)],
+                        log = TRUE))
   return(llik)
 }
 
@@ -194,7 +219,7 @@ fit_lik_c <- function(Y, p, m1, vl1, covariate,
     phi <- rep(exp(pars["alpha_phi"]), lgt)
     kappa <- rep(exp(pars["alpha_kappa"]), lgt)
     psi <- rep(exp(pars["log_psi"]), lgt)
-    lik_c(Y = Y, m1 = m1, vl1 = vl1,
+    lik_c_cpp(Y = Y, m1 = m1, vl1 = vl1,
           nu = nu, phi = phi, kappa = kappa, psi = psi,
           p = p, max_lag = max_lag)
   }
