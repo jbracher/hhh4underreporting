@@ -175,7 +175,22 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
   t(wgts)
 }
 
-# function for likelihood inference
+#' Fits a sesaonal endemic-epidemic model with underreporting using an approximative maximum
+#' likelihood scheme. The likelihood approximation is based on an approximation of the process by
+#' a second-order equivalent process with complete reporting. The reporting probability cannot be
+#' estimated from the data (in most cases these contain no information on it) and thus needs to be
+#' specified in advance.
+#'
+#' @param Y a time series of counts (numeric vector)
+#' @param L the number of observations per period (integer; e.g. 52 for weekly data and yearly seasonality)
+#' @param p the assumed reporting probability
+#' @param seas_phi should seasonality also be accounted for in the autoregressive parameter $phi$
+#' or only in the immigration parameter $nu$?
+#' @param initial the initial value of the parameter vector passed to optim
+#' (note: the function tries different starting values in any case)
+#' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
+#' @return the return object from \code{optim} providing the maximum likelihood estimates
+#' (mostly on the log scale).
 #' @export
 fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
                                               alpha_phi = -1, gamma_phi = 0, delta_phi = 0,
@@ -197,7 +212,7 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
     delta_phi <- ifelse(seas_phi, pars["delta_phi"], 0)
     alpha_kappa <- pars["alpha_kappa"]
     psi <- exp(pars["log_psi"])
-    lik_seas(Y = Y,
+    llik_seas(Y = Y,
              alpha_nu = alpha_nu, gamma_nu = gamma_nu, delta_nu = delta_nu,
              alpha_phi = alpha_phi, gamma_phi = gamma_phi, delta_phi = delta_phi,
              alpha_kappa = alpha_kappa, psi = psi, p = p, L = L, max_lag = max_lag)
@@ -213,11 +228,28 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
   return(opt)
 }
 
-# function to evaluate likelihood
+#' Evaluate the approximate log-likelihood of a seasonal underreported endemic-epidemic model
+#'
+#' The likelihood approximation is based on an approximation of the process by
+#' a second-order equivalent process with complete reporting.
+#'
+#' @param Y a time series of counts (numeric vector)
+#' @param alpha_nu,gamma_nu,delta_nu the endemic model parameters (scalar)
+#' @param alpha_phi,gamma_phi,delta_phi,alpha_kappa the autoregressive model parameters (scalars)
+#' @param psi overdispersion parameter (scalar)
+#' @param p the assumed reporting probability
+#' @param L the period length (integer; e.g. 52 for weekly data and yearly seasonality)
+#' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
+#' @param return_contributions shall the log-likelihood contributions of each time point be
+#' returned (as vector)?
+#'
+#' @return The log-likelihood as scalar or (if \code{return_contributions == TRUE}) the vector of
+#' log-likelihood contributions.
+#'
 #' @export
-lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
+llik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
                      alpha_phi, gamma_phi = 0, delta_phi = 0,
-                     alpha_kappa, psi, p, L, max_lag = 5){
+                     alpha_kappa, psi, p, L, max_lag = 5, return_contributions = FALSE){
   lgt <- length(Y)
   # get model matrix:
   # mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
@@ -256,12 +288,23 @@ lik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
 
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
-  llik <- - sum(dnbinom(Y, mu = lambda, size = rep(1/psi_star, length.out = lgt),
-                        log = TRUE)[-(1:max_lag)])
-  return(llik)
+  llik <- - dnbinom(Y, mu = lambda, size = rep(1/psi_star, length.out = lgt),
+                        log = TRUE)
+  if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
 }
 
-# function to simulate from seasonal model:
+#' Simulate from seasonal underreported model
+#'
+#' Simulate from a seasonal endemic-epidemic model with underreporting. Includes a burn-in period
+#' to reach stationary phase.
+#'
+#' @param nu,phi,kappa,psi the model parameters (vectors of equal length representing one period)
+#' @param p the reporting probability
+#' @param n_seas the number of seasons to simulate (integer)
+#' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period)
+#' @param burn_in number of seasons to discard to reach stationary phase
+#' @return A named list with elements \code{"X"} and \code{"Y"} containing the unthinned and thinned simulated time series.
+#' @export
 generate_ar_seas <- function(nu, phi, kappa, psi, p = 1, n_seas = 10,
                              start = 10, burn_in = 10){
   L <- length(nu)

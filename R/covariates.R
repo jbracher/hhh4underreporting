@@ -1,4 +1,23 @@
-generate_ar_c <- function(m1, vl1, nu, phi, kappa, psi, p = 1, lgt = 100){
+#' Simulate from underreported model with time-varying parameters
+#'
+#' Simulate from an endemic-epidemic model with time-varying
+#' parameters. Requires specification of initial mean and variance for $lambda$.
+#'
+#' @param m1 the initial mean, i.e. $E(lambda_1)$
+#' @param vl1 the initial variance of lambda, i.e. $Var(lambda_1)$
+#' @param nu,phi,kappa,psi the time-varying model parameters (vectors of same length)
+#' @param p the reporting probability
+#' @param lgt the length of the generated time series (integer)
+#' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period)
+#' @param burn_in number of iterations to discard to reach stationary phase
+#' @return A named list with elements \code{"X"} and \code{"Y"} containing the unthinned and thinned simulated time series.
+#' @export
+generate_ar_c <- function(m1, vl1, nu, phi, kappa, psi, p = 1){
+  lgt = length(nu)
+  if(lgt != length(phi) || lgt!= length(kappa) || lgt != length(psi)){
+    stop("parameter vectors nu, phui, kappa and psi need to be of the same length.")
+  }
+
   lambda <- X <- Y <- numeric(lgt)
   lambda[1] <- rnorm(1, m1, sd = sqrt(vl1))
   X[1] <- rnbinom(1, mu = lambda[1], size = 1/psi[1])
@@ -9,7 +28,7 @@ generate_ar_c <- function(m1, vl1, nu, phi, kappa, psi, p = 1, lgt = 100){
   }
 
   Y <- rbinom(lgt, X, p)
-  return(list(X = X, lambda = lambda, Y = Y))
+  return(list(X = X, Y = Y))
 }
 
 cond_mean_c <- function(m1, nu, phi, kappa){
@@ -147,8 +166,28 @@ nu_to_nu_tilde_c <- function(nu, kappa, max_lag){
   nu_transformed
 }
 
+#' Evaluate the approximate log-likelihood of an underreported endemic-epidemic
+#' model with time-varying parameters
+#'
+#' The likelihood approximation is based on an approximation of the process by
+#' a second-order equivalent process with complete reporting. Note that this is
+#' an R version while a reimplementation in Rcpp is used in the optimization.
+#'
+#' @param Y a time series of counts (numeric vector)
+#' @param m1 the initial mean, i.e. $E(lambda_1)$
+#' @param vl1 the initial variance of lambda, i.e. $Var(lambda_1)$
+#' @param nu,phi,kappa,psi the time-varying model parameters (vectors of same length)
+#' @param psi overdispersion parameter (scalar)
+#' @param p the assumed reporting probability
+#' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
+#' @param return_contributions shall the log-likelihood contributions of each time point be
+#' returned (as vector)?
+#'
+#' @return The log-likelihood as scalar or (if \code{return_contributions == TRUE}) the vector of
+#' log-likelihood contributions.
+#'
 #' @export
-lik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
+llik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
   lgt <- length(Y)
   # get model matrix:
   mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
@@ -173,12 +212,14 @@ lik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
-  llik <- - sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_star[-(1:max_lag)],
-                        log = TRUE))
+  llik <- dnbinom(Y, mu = lambda, size = 1/psi_star,
+                        log = TRUE)
+  if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
   return(llik)
 }
 
-lik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
+# version where the cpp bits are held together by R code.
+llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
   lgt <- length(Y)
   # get model matrix:
   mod_matr <- get_mod_matr_cpp(Y = Y, max_lag = max_lag)
@@ -206,7 +247,22 @@ lik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 }
 
 
-# function for likelihood inference
+#' Fits an endemic-epidemic model with underreporting and one covariate in the endemic component
+#' using an approximative maximum likelihood scheme. The likelihood approximation is based on an
+#' approximation of the process by a second-order equivalent process with complete reporting.
+#' The reporting probability cannot be estimated from the data (in most cases these contain no
+#' information on it) and thus needs to be specified in advance.
+#'
+#' @param Y a time series of counts (numeric vector)
+#' @param p the assumed reporting probability
+#' @param m1 the initial mean, i.e. $E(lambda_1)$
+#' @param vl1 the initial variance of lambda, i.e. $Var(lambda_1)$
+#' @param covariate the values of the covariate entering into the endemic component (numeric vector)
+#' @param initial the initial value of the parameter vector passed to optim
+#' (note: the function tries different starting values in any case)
+#' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
+#' @return the return object from \code{optim} providing the maximum likelihood estimates
+#' (mostly on the log scale).
 #' @export
 fit_lik_c <- function(Y, p, m1, vl1, covariate,
                       initial = c(alpha_nu = 4, beta_nu = 0,
@@ -220,7 +276,7 @@ fit_lik_c <- function(Y, p, m1, vl1, covariate,
     phi <- rep(exp(pars["alpha_phi"]), lgt)
     kappa <- rep(exp(pars["alpha_kappa"]), lgt)
     psi <- rep(exp(pars["log_psi"]), lgt)
-    lik_c_cpp(Y = Y, m1 = m1, vl1 = vl1,
+    llik_c_cpp(Y = Y, m1 = m1, vl1 = vl1,
           nu = nu, phi = phi, kappa = kappa, psi = psi,
           p = p, max_lag = max_lag)
   }

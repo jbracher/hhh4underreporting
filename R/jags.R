@@ -1,3 +1,10 @@
+#' Bayesian fitting of a time-homogeneous underreported endemic-epidemic model using JAGS
+#'
+#' Fits a time-homogeneous endemic-epidemic model with underreporting using JAGS.
+#'
+#' @param Y a time series of counts (numeric vector)
+#' @param p the assumed reporting probability
+#' @param n.chains,n.iter,n.burnin,n.thin settings passed to R2jags::jags
 #' @export
 fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
                      n.burnin = 1000, n.thin = 10, ...){

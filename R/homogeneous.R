@@ -1,4 +1,15 @@
-# function to simulate from time-homogeneous model (just a wrapper around the seasonal case):
+#' Simulate from time-homogeneous underreported model
+#'
+#' Simulate from a time-homogeneous endemic-epidemic model with underreporting. Includes a burn-in period
+#' to reach stationary phase.
+#'
+#' @param nu,phi,kappa,psi the model parameters (scalars)
+#' @param p the reporting probability
+#' @param lgt the length of the generated time series (integer)
+#' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period)
+#' @param burn_in number of iterations to discard to reach stationary phase
+#' @return A named list with elements \code{"X"} and \code{"Y"} containing the unthinned and thinned simulated time series.
+#' @export
 generate_ar <- function(nu, phi, kappa, psi, p = 1, lgt = 100,
                              start = 10, burn_in = 1000){
   generate_ar_seas(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p,
@@ -30,7 +41,7 @@ compute_sop <- function(nu, phi, kappa, psi, p, par_list = NULL){
               Y = Y))
 }
 
-# function to recover nu, pi, kappa, psi for a given p:
+# function to recover nu, phi, kappa, psi for a given p:
 recover_pars <- function(mu, sigma2, g, h, p = 1, sop_list = NULL){
   if(!is.null(sop_list)){
     mu <- sop_list$mu; sigma2 <- sop_list$sigma2; g <- sop_list$g; h <- sop_list$h
@@ -58,7 +69,21 @@ reparam <- function(nu, phi, kappa, psi, p){
   recover_pars(sop_list = sop)
 }
 
-# function to maximize likelihood:
+#' Fitting time-homogeneous underreported endemic-epidemic model using maximum likelihood
+#'
+#' Fits a time-homogeneous endemic-epidemic model with underreporting using an approximative maximum
+#' likelihood scheme. The likelihood approximation is based on an approximation of the process by
+#' a second-order equivalent process with complete reporting. The reporting probability cannot be
+#' estimated from the data (in most cases these contain no information on it) and thus needs to be
+#' specified in advance.
+#'
+#' @param Y a time series of counts (numeric vector)
+#' @param p the assumed reporting probability
+#' @param initial the initial value of the parameter vector passed to optim
+#' (note: the function tries different starting values in any case)
+#' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
+#' @return the return object from \code{optim} providing the maximum likelihood estimates
+#' on the log scale.
 #' @export
 fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, log_psi = 3), max_lag = 5, hessian = FALSE, ...){
   neg_lik_vect <- function(pars){
@@ -67,7 +92,7 @@ fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, 
     phi <- exp(pars["log_phi"])
     kappa <- exp(pars["log_kappa"])
     psi <- exp(pars["log_psi"])
-    -1 * lik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
+    -1 * llik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
   }
   initials <- list(initial,
                    initial*c(1.5, 1, 1, 1),
@@ -80,8 +105,22 @@ fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, 
   return(opt)
 }
 
+#' Evaluate the approximate log-likelihood of a time-homogeneous underreported endemic-epidemic model
+#'
+#' The likelihood approximation is based on an approximation of the process by
+#' a second-order equivalent process with complete reporting.
+#'
+#' @param Y a time series of counts (numeric vector)
+#' @param nu,phi,kappa,psi the model parameters (scalars)
+#' @param p the assumed reporting probability
+#' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
+#' @param return_contributions shall the log-likelihood contributions of each time point be
+#' returned (as vector)?
+#' @return The log-likelihood as scalar or (if \code{return_contributions == TRUE}) the vector of
+#' log-likelihood contributions.
+#'
 #' @export
-lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
+llik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
   # get second order properties:
   sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)$Y
 
@@ -103,11 +142,8 @@ lik <- function(Y, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = F
   }
   lin_pred <- nu_star_tilde + mod_matr %*% matrix(phi_star*kappa_star^(1:max_lag - 1), ncol = 1)
   llik <- dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi_star, log = TRUE)
-  if(return_contributions){
-    return(llik)
-  }else{
-    return(sum(llik[-(1:max_lag)]))
-  }
+
+  if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
 }
 
 emp_sop <- function(Y){
