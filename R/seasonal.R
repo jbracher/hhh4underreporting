@@ -195,7 +195,7 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
 fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
                                               alpha_phi = -1, gamma_phi = 0, delta_phi = 0,
                                               alpha_kappa = -1, log_psi = -3),
-                         max_lag = 10, ...){
+                         max_lag = 10, iter_optim = 3, ...){
 
   if(seas_phi == FALSE){
     initial <- initial[c("alpha_nu", "gamma_nu", "delta_nu",
@@ -217,14 +217,17 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
              alpha_phi = alpha_phi, gamma_phi = gamma_phi, delta_phi = delta_phi,
              alpha_kappa = alpha_kappa, psi = psi, p = p, L = L, max_lag = max_lag)
   }
-  initials <- list(initial,
-                   initial*c(1.5, rep(1, length(initial) - 1)),
-                   initial*c(0.5, rep(1, length(initial) - 1)))
-  opt <- optim(par = initials[[1]], fn = lik_vect,...)
-  for(i in 2:3){
-    opt_temp <- optim(par = initials[[i]], fn = lik_vect,...)
-    if(opt_temp$value < opt$value) opt <- opt_temp
+  # initials <- list(initial,
+  #                 initial*c(1.5, rep(1, length(initial) - 1)),
+  #                 initial*c(0.5, rep(1, length(initial) - 1)))
+  opt <- optim(par = initial, fn = lik_vect,...)
+  for(i in 1:iter_optim){
+    opt <- optim(par = opt$par, fn = lik_vect,...)
   }
+  # for(i in 2:3){
+  #   opt_temp <- optim(par = initials[[i]], fn = lik_vect,...)
+  #   if(opt_temp$value < opt$value) opt <- opt_temp
+  # }
   return(opt)
 }
 
