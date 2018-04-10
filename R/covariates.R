@@ -268,7 +268,7 @@ fit_lik_c <- function(Y, p, m1, vl1, covariate,
                       initial = c(alpha_nu = 4, beta_nu = 0,
                                   alpha_phi = -1,
                                   alpha_kappa = -1, log_psi = -3),
-                      max_lag = 10, ...){
+                      max_lag = 10, iter_optim = 3, ...){
 
   nllik_vect <- function(pars){
     lgt <- length(Y)
@@ -285,6 +285,6 @@ fit_lik_c <- function(Y, p, m1, vl1, covariate,
   for(i in 1:iter_optim){
     opt <- optim(par = opt$par, fn = nllik_vect, ...)
   }
-
+  return(opt)
 }
 
