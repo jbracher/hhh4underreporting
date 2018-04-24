@@ -61,9 +61,9 @@ fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
   pars_to_save <-  c("nu", "phi", "kappa", "psi", "p")
   dat <- list(n_timepoints = length(Y), Y = Y, p = p)
   inits0 <- if(p!=1){
-    list(list(X = round(Y/p), nu_geo = 10, phi = 0.4, kappa = 0.2, psi = 0.1))
+    list(list(X = round(Y/p), nu = 10, phi = 0.4, kappa = 0.2, psi = 0.1))
   }else{
-    list(list(nu_geo = 10, phi = 0.4, kappa = 0.2, psi = 0.1))
+    list(list(nu = 10, phi = 0.4, kappa = 0.2, psi = 0.1))
   }
 
   inits <- rep(inits0, n.chains)
