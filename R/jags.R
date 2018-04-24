@@ -37,11 +37,11 @@ fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
     function ()
     {
       p ~ dunif(0, 1)
-      nu_geo ~ dexp(0.001)
+      nu ~ dexp(0.001)
       phi ~ dexp(0.01)
       kappa ~ dexp(0.01)
       psi ~ dexp(0.001)
-      nu = nu_geo*(1 - kappa)
+      nu_geo = nu/(1 - kappa)
 
       for(t in 1:5){
         lambda[t] ~ dexp(0.001)
