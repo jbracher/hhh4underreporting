@@ -262,7 +262,7 @@ nllik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
   mod_matr <- get_mod_matr_cpp(Y = Y, max_lag = max_lag)
 
   # extract parameter values over one season:
-  vect_t <- seq(from = 0, length.out = L)
+  vect_t <- seq(from = 1, length.out = L)
   nu <- exp(alpha_nu + gamma_nu*sin(2*pi*vect_t/L) + delta_nu*cos(2*pi*vect_t/L))
   phi <- exp(alpha_phi + gamma_phi*sin(2*pi*vect_t/L) + delta_phi*cos(2*pi*vect_t/L))
   kappa <- rep(exp(alpha_kappa), L)
