@@ -85,22 +85,29 @@ reparam <- function(nu, phi, kappa, psi, p){
 #' @return the return object from \code{optim} providing the maximum likelihood estimates
 #' on the log scale.
 #' @export
-fit_lik <- function(Y, p, initial = c(log_nu = 2, log_phi = -2, log_kappa = -3, log_psi = 3), max_lag = 5, hessian = FALSE, ...){
+fit_lik <- function(Y, p, include_kappa = TRUE,
+                    initial = c(log_nu = 2, log_phi = -1, log_kappa = -2, log_psi = -3),
+                    max_lag = 5, iter_optim = 3, hessian = FALSE, ...){
+
+  # remove kappa from initial values if desired:
+  if(include_kappa == FALSE){
+    initial <- initial[names(initial) != "alpha_kappa"]
+  }
+
   nllik_vect <- function(pars){
     # extract parameter values:
     nu <- exp(pars["log_nu"])
     phi <- exp(pars["log_phi"])
-    kappa <- exp(pars["log_kappa"])
+    kappa <- ifelse(include_kappa, exp(pars["log_kappa"]), -10)
     psi <- exp(pars["log_psi"])
     nllik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p, max_lag = max_lag)
   }
-  initials <- list(initial,
-                   initial*c(1.5, 1, 1, 1),
-                   initial*c(0.5, 1, 1, 1))
-  opt <- optim(par = initials[[1]], fn = nllik_vect, hessian = hessian, ...)
-  for(i in 2:3){
-    opt_temp <- optim(par = initials[[i]], fn = nllik_vect, hessian = hessian, ...)
-    if(opt_temp$value < opt$value) opt <- opt_temp
+  # initials <- list(initial,
+  #                  initial*c(1.5, 1, 1, 1),
+  #                  initial*c(0.5, 1, 1, 1))
+  opt <- optim(par = initial, fn = nllik_vect, hessian = hessian, ...)
+  for(i in 1:iter_optim){
+    opt <- optim(par = opt$par, fn = nllik_vect, hessian = hessian, ...)
   }
   return(opt)
 }
