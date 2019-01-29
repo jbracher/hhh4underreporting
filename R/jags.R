@@ -17,6 +17,7 @@ fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
       kappa ~ dexp(0.01)
       psi ~ dexp(0.001)
       nu_geo = nu/(1 - kappa)
+      eff_rn = phi/(1 - kappa)
 
       for(t in 1:5){
         lambda[t] ~ dexp(0.001)
@@ -42,6 +43,7 @@ fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
       kappa ~ dexp(0.01)
       psi ~ dexp(0.001)
       nu_geo = nu/(1 - kappa)
+      eff_rn = phi/(1 - kappa)
 
       for(t in 1:5){
         lambda[t] ~ dexp(0.001)
@@ -58,7 +60,7 @@ fit_jags <- function(Y, p, n.chains = 5, n.iter = 10000,
     }
   }
 
-  pars_to_save <-  c("nu", "phi", "kappa", "psi", "p")
+  pars_to_save <-  c("nu", "phi", "kappa", "psi", "p", "eff_rn")
   dat <- list(n_timepoints = length(Y), Y = Y, p = p)
   inits0 <- if(p!=1){
     list(list(X = round(Y/p), nu = 10, phi = 0.4, kappa = 0.2, psi = 0.1))
