@@ -184,22 +184,25 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
 #' @param Y a time series of counts (numeric vector)
 #' @param L the number of observations per period (integer; e.g. 52 for weekly data and yearly seasonality)
 #' @param p the assumed reporting probability
-#' @param seas_phi should seasonality also be accounted for in the autoregressive parameter $phi$
+#' @param seas_phi should seasonality also be accounted for in the autoregressive parameter $phi$?
 #' or only in the immigration parameter $nu$?
+#' @param include_kappa should the parameter $kappa$ and thus lagged versions of the conditional expectation $lambda$ be included?
 #' @param initial the initial value of the parameter vector passed to optim
 #' (note: the function tries different starting values in any case)
 #' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
 #' @return the return object from \code{optim} providing the maximum likelihood estimates
 #' (mostly on the log scale).
 #' @export
-fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
+fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, include_kappa = TRUE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
                                               alpha_phi = -1, gamma_phi = 0, delta_phi = 0,
                                               alpha_kappa = -1, log_psi = -3),
                          max_lag = 10, iter_optim = 3, ...){
 
   if(seas_phi == FALSE){
-    initial <- initial[c("alpha_nu", "gamma_nu", "delta_nu",
-                         "alpha_phi", "alpha_kappa", "log_psi")]
+    initial <- initial[!(names(initial) %in% c("gamma_phi", "delta_phi"))]
+  }
+  if(include_kappa == FALSE){
+    initial <- initial[names(initial) != "alpha_kappa"]
   }
 
   lik_vect <- function(pars){
@@ -210,7 +213,7 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, initial = c(alpha_nu = 4, ga
     # use gamma_phi and delta_phi only if seas_phi == TRUE:
     gamma_phi <- ifelse(seas_phi, pars["gamma_phi"], 0)
     delta_phi <- ifelse(seas_phi, pars["delta_phi"], 0)
-    alpha_kappa <- pars["alpha_kappa"]
+    alpha_kappa <- ifelse(include_kappa, pars["alpha_kappa"], -10)
     psi <- exp(pars["log_psi"])
     nllik_seas(Y = Y,
              alpha_nu = alpha_nu, gamma_nu = gamma_nu, delta_nu = delta_nu,
