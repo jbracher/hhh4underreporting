@@ -1,4 +1,4 @@
-#' Data set on rotavirus gastroenteritis in Bremen and Lower Saxony
+#' Data set on rotavirus gastroenteritis in Germany
 #'
 #' Case counts of rotavirus gastroenteritis in the sixteen German states, 2001-2017
 #'
