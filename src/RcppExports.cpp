@@ -5,9 +5,9 @@
 
 using namespace Rcpp;
 
-// compute_sop_c_cpp
-List compute_sop_c_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
-RcppExport SEXP _hhh4underreporting_compute_sop_c_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
+// compute_sop_cov_cpp
+List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
+RcppExport SEXP _hhh4underreporting_compute_sop_cov_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -18,13 +18,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_sop_c_cpp(m1, vl1, nu, phi, kappa, psi, p));
+    rcpp_result_gen = Rcpp::wrap(compute_sop_cov_cpp(m1, vl1, nu, phi, kappa, psi, p));
     return rcpp_result_gen;
 END_RCPP
 }
-// reparam_c_cpp
-List reparam_c_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
-RcppExport SEXP _hhh4underreporting_reparam_c_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
+// reparam_cov_cpp
+List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
+RcppExport SEXP _hhh4underreporting_reparam_cov_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -35,38 +35,38 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(reparam_c_cpp(m1, vl1, nu, phi, kappa, psi, p));
+    rcpp_result_gen = Rcpp::wrap(reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, p));
     return rcpp_result_gen;
 END_RCPP
 }
-// get_weight_matrix_c_cpp
-NumericMatrix get_weight_matrix_c_cpp(NumericVector phi, NumericVector kappa, int max_lag);
-RcppExport SEXP _hhh4underreporting_get_weight_matrix_c_cpp(SEXP phiSEXP, SEXP kappaSEXP, SEXP max_lagSEXP) {
+// get_weight_matrix_cov_cpp
+NumericMatrix get_weight_matrix_cov_cpp(NumericVector phi, NumericVector kappa, int max_lag);
+RcppExport SEXP _hhh4underreporting_get_weight_matrix_cov_cpp(SEXP phiSEXP, SEXP kappaSEXP, SEXP max_lagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< int >::type max_lag(max_lagSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_weight_matrix_c_cpp(phi, kappa, max_lag));
+    rcpp_result_gen = Rcpp::wrap(get_weight_matrix_cov_cpp(phi, kappa, max_lag));
     return rcpp_result_gen;
 END_RCPP
 }
-// nu_to_nu_tilde_c_cpp
-NumericVector nu_to_nu_tilde_c_cpp(NumericVector nu, NumericVector kappa);
-RcppExport SEXP _hhh4underreporting_nu_to_nu_tilde_c_cpp(SEXP nuSEXP, SEXP kappaSEXP) {
+// nu_to_nu_tilde_cov_cpp
+NumericVector nu_to_nu_tilde_cov_cpp(NumericVector nu, NumericVector kappa);
+RcppExport SEXP _hhh4underreporting_nu_to_nu_tilde_cov_cpp(SEXP nuSEXP, SEXP kappaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
-    rcpp_result_gen = Rcpp::wrap(nu_to_nu_tilde_c_cpp(nu, kappa));
+    rcpp_result_gen = Rcpp::wrap(nu_to_nu_tilde_cov_cpp(nu, kappa));
     return rcpp_result_gen;
 END_RCPP
 }
-// nllik_c_cpp
-double nllik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p, int max_lag);
-RcppExport SEXP _hhh4underreporting_nllik_c_cpp(SEXP YSEXP, SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP, SEXP max_lagSEXP) {
+// nllik_cov_cpp
+double nllik_cov_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p, int max_lag);
+RcppExport SEXP _hhh4underreporting_nllik_cov_cpp(SEXP YSEXP, SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP, SEXP max_lagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -79,7 +79,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
     Rcpp::traits::input_parameter< double >::type p(pSEXP);
     Rcpp::traits::input_parameter< int >::type max_lag(max_lagSEXP);
-    rcpp_result_gen = Rcpp::wrap(nllik_c_cpp(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag));
+    rcpp_result_gen = Rcpp::wrap(nllik_cov_cpp(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -227,11 +227,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_hhh4underreporting_compute_sop_c_cpp", (DL_FUNC) &_hhh4underreporting_compute_sop_c_cpp, 7},
-    {"_hhh4underreporting_reparam_c_cpp", (DL_FUNC) &_hhh4underreporting_reparam_c_cpp, 7},
-    {"_hhh4underreporting_get_weight_matrix_c_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_c_cpp, 3},
-    {"_hhh4underreporting_nu_to_nu_tilde_c_cpp", (DL_FUNC) &_hhh4underreporting_nu_to_nu_tilde_c_cpp, 2},
-    {"_hhh4underreporting_nllik_c_cpp", (DL_FUNC) &_hhh4underreporting_nllik_c_cpp, 9},
+    {"_hhh4underreporting_compute_sop_cov_cpp", (DL_FUNC) &_hhh4underreporting_compute_sop_cov_cpp, 7},
+    {"_hhh4underreporting_reparam_cov_cpp", (DL_FUNC) &_hhh4underreporting_reparam_cov_cpp, 7},
+    {"_hhh4underreporting_get_weight_matrix_cov_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_cov_cpp, 3},
+    {"_hhh4underreporting_nu_to_nu_tilde_cov_cpp", (DL_FUNC) &_hhh4underreporting_nu_to_nu_tilde_cov_cpp, 2},
+    {"_hhh4underreporting_nllik_cov_cpp", (DL_FUNC) &_hhh4underreporting_nllik_cov_cpp, 9},
     {"_hhh4underreporting_timesTwo", (DL_FUNC) &_hhh4underreporting_timesTwo, 1},
     {"_hhh4underreporting_back_seas_cpp", (DL_FUNC) &_hhh4underreporting_back_seas_cpp, 3},
     {"_hhh4underreporting_get_weight_matrix_seas_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_seas_cpp, 3},

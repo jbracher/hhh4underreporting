@@ -1,7 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-NumericVector cond_mean_c_cpp(double m1, NumericVector nu, NumericVector phi, NumericVector kappa){
+NumericVector cond_mean_cov_cpp(double m1, NumericVector nu, NumericVector phi, NumericVector kappa){
   int lgt = nu.size();
   NumericVector mu_X(lgt);
   mu_X(0) = m1;
@@ -12,7 +12,7 @@ NumericVector cond_mean_c_cpp(double m1, NumericVector nu, NumericVector phi, Nu
 }
 
 // [[Rcpp::export]]
-List compute_sop_c_cpp(double m1, double vl1, NumericVector nu,
+List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu,
                              NumericVector phi, NumericVector kappa, NumericVector psi, double p){
   int lgt = nu.size();
   NumericVector mu_X(lgt);
@@ -46,11 +46,11 @@ List compute_sop_c_cpp(double m1, double vl1, NumericVector nu,
 
 
 // [[Rcpp::export]]
-List reparam_c_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa,
+List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa,
                    NumericVector psi, double p){
   int lgt = nu.size();
   // compute target second-order properties:
-  List target_sop = compute_sop_c_cpp(m1, vl1, nu, phi, kappa, psi, p);
+  List target_sop = compute_sop_cov_cpp(m1, vl1, nu, phi, kappa, psi, p);
 
   // now find a completely observed process with the same properties:
   NumericVector nu_star = p*nu; // known for theoretical reasons (?)
@@ -94,7 +94,7 @@ List reparam_c_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, N
 
 
 // [[Rcpp::export]]
-NumericMatrix get_weight_matrix_c_cpp(NumericVector phi, NumericVector kappa, int max_lag){
+NumericMatrix get_weight_matrix_cov_cpp(NumericVector phi, NumericVector kappa, int max_lag){
   int lgt = phi.size();
 
   NumericMatrix wgts(lgt, max_lag);
@@ -113,12 +113,12 @@ NumericMatrix get_weight_matrix_c_cpp(NumericVector phi, NumericVector kappa, in
 }
 
 // [[Rcpp::export]]
-NumericVector nu_to_nu_tilde_c_cpp(NumericVector nu, NumericVector kappa){
-  return cond_mean_c_cpp(nu(0), nu, NumericVector(nu.size()), kappa);
+NumericVector nu_to_nu_tilde_cov_cpp(NumericVector nu, NumericVector kappa){
+  return cond_mean_cov_cpp(nu(0), nu, NumericVector(nu.size()), kappa);
 }//!!! this does not use max_lag now; takes lags as far as it can get them (approximately); should be good enough.
 
 // a simple copy...
-NumericMatrix get_mod_matr_c_cpp(NumericVector Y, int max_lag){
+NumericMatrix get_mod_matr_cov_cpp(NumericVector Y, int max_lag){
   int L = Y.size();
   NumericMatrix mod_matr(L, max_lag);
   for(int ro = 0; ro < L; ro++){
@@ -134,13 +134,13 @@ NumericMatrix get_mod_matr_c_cpp(NumericVector Y, int max_lag){
 }
 
 // [[Rcpp::export]]
-double nllik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi,
+double nllik_cov_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi,
                  NumericVector kappa, NumericVector psi, double p, int max_lag = 5){
   int lgt = Y.size();
   // get model matrix:
-  NumericMatrix mod_matr = get_mod_matr_c_cpp(Y, max_lag);
+  NumericMatrix mod_matr = get_mod_matr_cov_cpp(Y, max_lag);
   // get corresponding parameters for unthinned process:
-  List pars_star = reparam_c_cpp(m1, vl1, nu, phi, kappa, psi, p);
+  List pars_star = reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, p);
   // extract:
   double m1_star = pars_star("m1");
   double vl1_star = pars_star("vl1");
@@ -150,10 +150,10 @@ double nllik_c_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, Num
   NumericVector psi_star = pars_star("psi");
 
   // get nu_tilde, i.e. nu for geometric lag formulation
-  NumericVector nu_star_tilde  = nu_to_nu_tilde_c_cpp(nu_star, kappa_star);
+  NumericVector nu_star_tilde  = nu_to_nu_tilde_cov_cpp(nu_star, kappa_star);
 
   // get weight matrix for lags:
-  NumericMatrix weight_matrix = get_weight_matrix_c_cpp(phi_star, kappa_star, max_lag);
+  NumericMatrix weight_matrix = get_weight_matrix_cov_cpp(phi_star, kappa_star, max_lag);
 
   // get conditional means:
   NumericVector lambda(lgt);

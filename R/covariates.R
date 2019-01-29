@@ -1,37 +1,54 @@
-#' Simulate from underreported model with time-varying parameters
+#' Simulate from underreported model with one covariate
 #'
-#' Simulate from an endemic-epidemic model with time-varying
-#' parameters. Requires specification of initial mean and variance for $lambda$.
+#' Simulate from an endemic-epidemic model with a covariate entering
+#' into the endemic component. Requires specification of the initial value for $lambda$.
 #'
-#' @param m1 the initial mean, i.e. $E(lambda_1)$
-#' @param vl1 the initial variance of lambda, i.e. $Var(lambda_1)$
-#' @param nu,phi,kappa,psi the time-varying model parameters (vectors of same length)
+#' @param lambda1 the initial mean
+#' @param alpha_nu,beta_nu,phi,kappa,psi the parameters of the latent model
 #' @param p the reporting probability
-#' @param lgt the length of the generated time series (integer)
+#' @param z a covariate entering into the endemic parameter $nu$
 #' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period)
-#' @param burn_in number of iterations to discard to reach stationary phase
 #' @return A named list with elements \code{"X"} and \code{"Y"} containing the unthinned and thinned simulated time series.
+#' @examples
+#' # define a covariate:
+#' z <- sin(2*pi*1:200/20)
+#' # define the model parameters:
+#' lambda1 <- 10
+#' alpha_nu <- 3
+#' beta_nu <- 1
+#' phi <- 0.5
+#' kappa <- 0.2
+#' psi <- 0.1
+#' p <- 0.5
+#' sim <- generate_ar_cov(lambda1 = lambda1,
+#'                        alpha_nu = alpha_nu,
+#'                        beta_nu = beta_nu,
+#'                        phi = phi,
+#'                        kappa = kappa,
+#'                        psi = psi,
+#'                        p = p,
+#'                        z = z)
 #' @export
-generate_ar_c <- function(m1, vl1, nu, phi, kappa, psi, p = 1){
-  lgt = length(nu)
-  if(lgt != length(phi) || lgt!= length(kappa) || lgt != length(psi)){
-    stop("parameter vectors nu, phui, kappa and psi need to be of the same length.")
-  }
+generate_ar_cov <- function(lambda1, alpha_nu, beta_nu, phi, kappa, psi, p = 1, z){
+  lgt = length(z)
+
+  # compute nu:
+  nu <- exp(alpha_nu + beta_nu*z)
 
   lambda <- X <- Y <- numeric(lgt)
-  lambda[1] <- rnorm(1, m1, sd = sqrt(vl1))
-  X[1] <- rnbinom(1, mu = lambda[1], size = 1/psi[1])
+  lambda[1] <- lambda1
+  X[1] <- rnbinom(1, mu = lambda[1], size = 1/psi)
 
   for(t in 2:lgt){
-    lambda[t] <- nu[t] + phi[t]*X[t - 1] + kappa[t]*lambda[t - 1]
-    X[t] <- rnbinom(1, mu = lambda[t], size = 1/psi[t])
+    lambda[t] <- nu[t] + phi*X[t - 1] + kappa*lambda[t - 1]
+    X[t] <- rnbinom(1, mu = lambda[t], size = 1/psi)
   }
 
   Y <- rbinom(lgt, X, p)
   return(list(X = X, Y = Y))
 }
 
-cond_mean_c <- function(m1, nu, phi, kappa){
+cond_mean_cov <- function(m1, nu, phi, kappa){
   lgt <- length(nu)
   mu <- numeric(lgt)
   mu[1] <- m1
@@ -41,10 +58,10 @@ cond_mean_c <- function(m1, nu, phi, kappa){
   return(mu)
 }
 
-compute_sop_c <- function(m1, vl1, nu, phi, kappa, psi, p, compute_Sigma = FALSE){
+compute_sop_cov <- function(m1, vl1, nu, phi, kappa, psi, p, compute_Sigma = FALSE){
   lgt <- length(nu)
   # get means:
-  mu_X <- cond_mean_c(m1 = m1, nu = nu,  phi = phi, kappa = kappa)
+  mu_X <- cond_mean_cov(m1 = m1, nu = nu,  phi = phi, kappa = kappa)
   # compute variances of lambda as they will be required:
   v_lambda <- v_X <- cov1_X <- numeric(lgt)
   v_lambda[1] <- vl1
@@ -95,10 +112,10 @@ compute_sop_c <- function(m1, vl1, nu, phi, kappa, psi, p, compute_Sigma = FALSE
 }
 
 
-reparam_c <- function(m1, vl1, nu, phi, kappa, psi, p){
+reparam_cov <- function(m1, vl1, nu, phi, kappa, psi, p){
   lgt <- length(nu)
   # compute target second-order properties:
-  target_sop <- compute_sop_c(m1 = m1, vl1 = vl1, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)
+  target_sop <- compute_sop_cov(m1 = m1, vl1 = vl1, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)
 
   # now find a completely observed process with the same properties:
   nu_star <- p*nu # known for theoretical reasons (?)
@@ -131,7 +148,7 @@ reparam_c <- function(m1, vl1, nu, phi, kappa, psi, p){
       (mu_X_star[i]^2 + v_lambda_star[i])
   }
 
-  # current_sop <- compute_sop_c(m1 = mu_X_star[1], vl1 = v_lambda_star[1], nu = nu_star,
+  # current_sop <- compute_sop_cov(m1 = mu_X_star[1], vl1 = v_lambda_star[1], nu = nu_star,
   #                              phi = phi_star, kappa = kappa_star, psi = psi_star, p = 1)
   # if(all.equal(target_sop$v_Y, current_sop$v_Y)) print("worked")
 
@@ -140,7 +157,7 @@ reparam_c <- function(m1, vl1, nu, phi, kappa, psi, p){
 }
 
 # auxiliary function to get weight matrix for lags:
-get_weight_matrix_c <- function(phi, kappa, max_lag){
+get_weight_matrix_cov <- function(phi, kappa, max_lag){
   if(length(phi) != length(kappa)) stop("phi and kappa need to be the same length.")
   lgt <- length(phi)
 
@@ -157,7 +174,7 @@ get_weight_matrix_c <- function(phi, kappa, max_lag){
 }
 
 # function for obtaining "shifted" nu necessary for observation-driven formulation
-nu_to_nu_tilde_c <- function(nu, kappa, max_lag){
+nu_to_nu_tilde_cov <- function(nu, kappa, max_lag){
   lgt <- length(nu)
   nu_transformed <- nu
   for(i in 1:max_lag){
@@ -187,7 +204,7 @@ nu_to_nu_tilde_c <- function(nu, kappa, max_lag){
 #' log-likelihood contributions.
 #'
 #' @export
-llik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
+llik_cov <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
   lgt <- length(Y)
   # get model matrix:
   mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
@@ -196,7 +213,7 @@ llik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contr
   }
 
   # get corresponding parameters for unthinned process:
-  pars_star <- reparam_c(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
+  pars_star <- reparam_cov(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
                          kappa = kappa, psi = psi, p = p)
   m1_star <- pars_star$m1
   vl1_star <- pars_star$vl1
@@ -205,10 +222,10 @@ llik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contr
   kappa_star <- pars_star$kappa
   psi_star <- pars_star$psi
 
-  nu_star_tilde <- nu_to_nu_tilde_c(nu = nu_star, kappa = kappa_star, max_lag = max_lag)
+  nu_star_tilde <- nu_to_nu_tilde_cov(nu = nu_star, kappa = kappa_star, max_lag = max_lag)
 
   # get weight matrix:
-  weight_matrix <- get_weight_matrix_c(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
+  weight_matrix <- get_weight_matrix_cov(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
 
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
@@ -219,13 +236,13 @@ llik_c <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contr
 }
 
 # version where the cpp bits are held together by R code.
-llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
+llik_cov_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
   lgt <- length(Y)
   # get model matrix:
   mod_matr <- get_mod_matr_cpp(Y = Y, max_lag = max_lag)
 
   # get corresponding parameters for unthinned process:
-  pars_star <- reparam_c_cpp(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
+  pars_star <- reparam_cov_cpp(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
                              kappa = kappa, psi = psi, p = p)
   m1_star <- pars_star$m1
   vl1_star <- pars_star$vl1
@@ -234,10 +251,10 @@ llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
   kappa_star <- pars_star$kappa
   psi_star <- pars_star$psi
 
-  nu_star_tilde <- nu_to_nu_tilde_c_cpp(nu = nu_star, kappa = kappa_star)
+  nu_star_tilde <- nu_to_nu_tilde_cov_cpp(nu = nu_star, kappa = kappa_star)
 
   # get weight matrix:
-  weight_matrix <- get_weight_matrix_c_cpp(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
+  weight_matrix <- get_weight_matrix_cov_cpp(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
 
   # get likelihood:
   lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
@@ -246,7 +263,8 @@ llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
   return(llik)
 }
 
-
+#' Fit an endemic-epidemic model with underreporting and one covariate
+#'
 #' Fits an endemic-epidemic model with underreporting and one covariate in the endemic component
 #' using an approximative maximum likelihood scheme. The likelihood approximation is based on an
 #' approximation of the process by a second-order equivalent process with complete reporting.
@@ -264,7 +282,7 @@ llik_c_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 #' @return the return object from \code{optim} providing the maximum likelihood estimates
 #' (mostly on the log scale).
 #' @export
-fit_lik_c <- function(Y, p, m1, vl1, covariate,
+fit_lik_cov <- function(Y, p, m1, vl1, covariate,
                       initial = c(alpha_nu = 4, beta_nu = 0,
                                   alpha_phi = -1,
                                   alpha_kappa = -1, log_psi = -3),
@@ -276,7 +294,7 @@ fit_lik_c <- function(Y, p, m1, vl1, covariate,
     phi <- rep(exp(pars["alpha_phi"]), lgt)
     kappa <- rep(exp(pars["alpha_kappa"]), lgt)
     psi <- rep(exp(pars["log_psi"]), lgt)
-    nllik_c_cpp(Y = Y, m1 = m1, vl1 = vl1,
+    nllik_cov_cpp(Y = Y, m1 = m1, vl1 = vl1,
                 nu = nu, phi = phi, kappa = kappa, psi = psi,
                 p = p, max_lag = max_lag)
   }
