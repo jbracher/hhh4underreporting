@@ -88,7 +88,7 @@ reparam <- function(nu, phi, kappa, psi, q){
 #' @export
 fit_hhh4u <- function(observed, q, include_kappa = TRUE,
                     initial = c(log_nu = 2, log_phi = -1, log_kappa = -2, log_psi = -3),
-                    max_lag = 5, iter_optim = 3, hessian = FALSE, ...){
+                    max_lag = 5, iter_optim = 3, hessian = TRUE, ...){
 
   # remove kappa from initial values if desired:
   if(include_kappa == FALSE){
@@ -109,7 +109,23 @@ fit_hhh4u <- function(observed, q, include_kappa = TRUE,
   for(i in 1:iter_optim){
     opt <- optim(par = opt$par, fn = nllik_vect, hessian = hessian, ...)
   }
-  return(opt)
+
+  # prepare return object:
+  Sigma <- solve(opt$hessian)
+  ret <- list()
+  ret$par <- exp(opt$par)
+  ret$sd <- if(hessian) sqrt(diag(Sigma)*exp(fit$par)^2) else NULL
+  names(ret$par) <- names(ret$sd) <- c("nu", "phi", "kappa", "psi")
+
+  ret$par_log <- opt$par
+  ret$sd_log <- if(hessian) diag(Sigma) else NULL
+  ret$Sigma_log <- Sigma
+  ret$opt <- opt
+  ret$observed <- observed
+  ret$q <- q
+  ret$settings <- list(max_lag = max_lag, iter_optim = iter_optim,
+                       initial = initial, hessian = hessian)
+  return(ret)
 }
 
 #' Evaluate the approximate log-likelihood of a time-homogeneous underreported endemic-epidemic model
