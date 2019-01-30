@@ -77,15 +77,15 @@ compute_sop_seas <- function(nu, phi, kappa, psi, q){
     (1 + psi[inds_shifted])
   decay_X <- phi + kappa
 
-  mu_Y <- q*mu_X
-  sigma2_Y <- q^2*sigma2_X + q*(1 - q)*mu_X
-  cov1_Y <- q^2*cov1_X
-  decay_Y <- decay_X
+  mu_X_tilde <- q*mu_X
+  sigma2_X_tilde <- q^2*sigma2_X + q*(1 - q)*mu_X
+  cov1_X_tilde <- q^2*cov1_X
+  decay_X_tilde <- decay_X
 
   return(list(mu_X = mu_X, sigma2_X = sigma2_X,
               cov1_X = cov1_X, v_X = sigma2_X, decay_cov_X = decay_X,
-              mu_Y = mu_Y, v_Y = sigma2_Y,
-              cov1_Y = cov1_Y, decay_cov_Y = decay_Y))
+              mu_X_tilde = mu_X_tilde, v_X_tilde = sigma2_X_tilde,
+              cov1_X_tilde = cov1_X_tilde, decay_cov_X_tilde = decay_X_tilde))
 }
 
 
@@ -96,54 +96,55 @@ reparam_seas <- function(nu, phi, kappa, psi, q){
 
   target_sop <- compute_sop_seas(nu, phi, kappa, psi, q)
 
-  # now find a completely observed process with the same properties:
-  nu_star <- q*nu # known for theoretical reasons
-  phi_plus_kappa_star <- target_sop$decay_cov_Y # this, too.
-  mu_X_star <- target_sop$mu_Y # by definition
-  v_X_star <- target_sop$v_Y # by definition
-  cov1_X_star <- target_sop$cov1_Y # by definition
+  # now find a completely observed process Y with the same properties:
+  nu_Y <- q*nu # known for theoretical reasons
+  phi_plus_kappa_Y <- target_sop$decay_cov_X_tilde # this, too.
+  mu_Y <- target_sop$mu_X_tilde # by definition
+  v_Y <- target_sop$v_X_tilde # by definition
+  cov1_Y <- target_sop$cov1_X_tilde # by definition
 
   # for the remaining one the old values are ususally good starting values:
-  phi_star <- phi
-  kappa_star <- phi_plus_kappa_star - phi_star
-  psi_star <- psi
+  phi_Y <- phi
+  kappa_Y <- phi_plus_kappa_Y - phi_Y
+  psi_Y <- psi
 
-  # given a starting value of psi[L] we can get var_lambda_star[L]
-  v_lambda_star <- numeric(L)
-  v_lambda_star[L] <- (v_X_star[L] - mu_X_star[L] - psi_star[L]*mu_X_star[L]^2)/
-    (1 + psi_star[L])
+  # given a starting value of psi[L] we can get var_lambda_Y[L]
+  # (the variance of the conditional mean process for Y)
+  v_lambda_Y <- numeric(L)
+  v_lambda_Y[L] <- (v_Y[L] - mu_Y[L] - psi_Y[L]*mu_Y[L]^2)/
+    (1 + psi_Y[L])
 
   # now we can iteratively roll through the weeks and correct the values of phi and kappa
   for(k in 1:3){
     for(i in 1:L){
       im1 <- ifelse(i == 1, L, i - 1)
-      # correct phi_star[i]
-      phi_star[i] <- (cov1_X_star[i] - phi_plus_kappa_star[i]*v_lambda_star[im1] -
-                        phi_plus_kappa_star[i]*mu_X_star[im1]^2 -
-                        nu_star[i]*mu_X_star[im1] + mu_X_star[i]*mu_X_star[im1])/
-        (v_X_star[im1] - v_lambda_star[im1])
-      kappa_star[i] <- phi_plus_kappa_star[i] - phi_star[i]
-      # update v_lambda_star:
-      v_lambda_star[i] <- phi_star[i]^2*v_X_star[im1] +
-        (2*phi_star[i]*kappa_star[i] + kappa_star[i]^2)*v_lambda_star[im1]
-      # now correct psi_star[i]
-      psi_star[i] <- (v_X_star[i] - v_lambda_star[i] - mu_X_star[i])/
-        (mu_X_star[i]^2 + v_lambda_star[i])
+      # correct phi_Y[i]
+      phi_Y[i] <- (cov1_Y[i] - phi_plus_kappa_Y[i]*v_lambda_Y[im1] -
+                        phi_plus_kappa_Y[i]*mu_Y[im1]^2 -
+                        nu_Y[i]*mu_Y[im1] + mu_Y[i]*mu_Y[im1])/
+        (v_Y[im1] - v_lambda_Y[im1])
+      kappa_Y[i] <- phi_plus_kappa_Y[i] - phi_Y[i]
+      # update v_lambda_Y:
+      v_lambda_Y[i] <- phi_Y[i]^2*v_Y[im1] +
+        (2*phi_Y[i]*kappa_Y[i] + kappa_Y[i]^2)*v_lambda_Y[im1]
+      # now correct psi_Y[i]
+      psi_Y[i] <- (v_Y[i] - v_lambda_Y[i] - mu_Y[i])/
+        (mu_Y[i]^2 + v_lambda_Y[i])
     }
   }
-  return(list(nu = nu_star, phi = phi_star, kappa = kappa_star, psi = psi_star, q = 1))
+  return(list(nu = nu_Y, phi = phi_Y, kappa = kappa_Y, psi = psi_Y, q = 1))
 }
 
-# function for obtaining "shifted" nu necessary for observation-driven formulation
-nu_to_nu_tilde_seas <- function(nu, kappa, max_lag = 5){
+# function for obtaining "shifted" nu necessary for geometric-lag formulation
+nu_to_nu_star_seas <- function(nu, kappa, max_lag = 5){
   nu_prolonged <- c(tail(nu, max_lag), nu)
   nu_matr <- matrix(nrow = length(nu), ncol = max_lag + 1)
   for(i in 1:length(nu)){
     nu_matr[i, ] <- rev(nu_prolonged[seq(from = i, length.out = max_lag + 1)])
   }
   weight_matrix <- get_weight_matrix_seas_cpp(phi = rep(1, length(nu)), kappa = kappa, max_lag = max_lag + 1)
-  nu_transformed <- rowSums(weight_matrix*nu_matr)
-  return(nu_transformed)
+  nu_star <- rowSums(weight_matrix*nu_matr)
+  return(nu_star)
 }
 
 # auxililary function to get lagged variables:
@@ -181,7 +182,7 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
 #' estimated from the data (in most cases these contain no information on it) and thus needs to be
 #' specified in advance.
 #'
-#' @param Y a time series of counts (numeric vector)
+#' @param observed a time series of counts (numeric vector)
 #' @param L the number of observations per period (integer; e.g. 52 for weekly data and yearly seasonality)
 #' @param q the assumed reporting probability
 #' @param seas_phi should seasonality also be accounted for in the autoregressive parameter $phi$?
@@ -193,7 +194,7 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
 #' @return the return object from \code{optim} providing the maximum likelihood estimates
 #' (mostly on the log scale).
 #' @export
-fit_hhh4u_seasonal <- function(Y, L, q, seas_phi = FALSE, include_kappa = TRUE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
+fit_hhh4u_seasonal <- function(observed, L, q, seas_phi = FALSE, include_kappa = TRUE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
                                               alpha_phi = -1, gamma_phi = 0, delta_phi = 0,
                                               alpha_kappa = -1, log_psi = -3),
                          max_lag = 10, iter_optim = 3, ...){
@@ -215,7 +216,7 @@ fit_hhh4u_seasonal <- function(Y, L, q, seas_phi = FALSE, include_kappa = TRUE, 
     delta_phi <- ifelse(seas_phi, pars["delta_phi"], 0)
     alpha_kappa <- ifelse(include_kappa, pars["alpha_kappa"], -10)
     psi <- exp(pars["log_psi"])
-    nllik_seas(Y = Y,
+    nllik_seas(observed = observed,
              alpha_nu = alpha_nu, gamma_nu = gamma_nu, delta_nu = delta_nu,
              alpha_phi = alpha_phi, gamma_phi = gamma_phi, delta_phi = delta_phi,
              alpha_kappa = alpha_kappa, psi = psi, q = q, L = L, max_lag = max_lag)
@@ -234,7 +235,7 @@ fit_hhh4u_seasonal <- function(Y, L, q, seas_phi = FALSE, include_kappa = TRUE, 
 #' The likelihood approximation is based on an approximation of the process by
 #' a second-order equivalent process with complete reporting.
 #'
-#' @param Y a time series of counts (numeric vector)
+#' @param observed a time series of counts (numeric vector)
 #' @param alpha_nu,gamma_nu,delta_nu the endemic model parameters (scalar)
 #' @param alpha_phi,gamma_phi,delta_phi,alpha_kappa the autoregressive model parameters (scalars)
 #' @param psi overdispersion parameter (scalar)
@@ -248,16 +249,16 @@ fit_hhh4u_seasonal <- function(Y, L, q, seas_phi = FALSE, include_kappa = TRUE, 
 #' negative log-likelihood contributions.
 #'
 #' @export
-nllik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
+nllik_seas <- function(observed, alpha_nu, gamma_nu, delta_nu,
                      alpha_phi, gamma_phi = 0, delta_phi = 0,
                      alpha_kappa, psi, q, L, max_lag = 5, return_contributions = FALSE){
-  lgt <- length(Y)
+  lgt <- length(observed)
   # get model matrix:
-  # mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
+  # mod_matr <- matrix(nrow = length(observed), ncol = max_lag)
   # for(i in 1:max_lag){
-  #   mod_matr[, i] <- c(rep(NA, i), head(Y, lgt - i))
+  #   mod_matr[, i] <- c(rep(NA, i), head(observed, lgt - i))
   # }
-  mod_matr <- get_mod_matr_cpp(Y = Y, max_lag = max_lag)
+  mod_matr <- get_mod_matr_cpp(observed = observed, max_lag = max_lag)
 
   # extract parameter values over one season:
   vect_t <- seq(from = 1, length.out = L)
@@ -272,24 +273,24 @@ nllik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
   if(any(unlist(sop) < 0)) return(-Inf)
 
   # get corresponding parameters for unthinned process:
-  pars_star <- reparam_seas_cpp(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)
-  nu_star <- pars_star$nu
-  phi_star <- pars_star$phi
-  kappa_star <- pars_star$kappa
-  psi_star <- pars_star$psi
+  pars_Y <- reparam_seas_cpp(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)
+  nu_Y <- pars_Y$nu
+  phi_Y <- pars_Y$phi
+  kappa_Y <- pars_Y$kappa
+  psi_Y <- pars_Y$psi
 
-  # nu_star needs to be transformed to move to the observation-driven formulation
+  # nu_Y needs to be transformed to move to the observation-driven formulation
   # of our process
-  nu_star_tilde <- nu_to_nu_tilde_seas_cpp(nu = nu_star, kappa = kappa_star, max_lag = max_lag)
+  nu_Y_tilde <- nu_to_nu_star_seas_cpp(nu = nu_Y, kappa = kappa_Y, max_lag = max_lag)
 
   # get weight matrix:
-  weight_matrix <- get_weight_matrix_seas_cpp(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
+  weight_matrix <- get_weight_matrix_seas_cpp(phi = phi_Y, kappa = kappa_Y, max_lag = max_lag)
   # paste as appropriate.
   weight_matrix <- weight_matrix[rep(1:L, length.out = lgt), ]
 
   # get likelihood:
-  lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
-  llik <- -1*dnbinom(Y, mu = lambda, size = rep(1/psi_star, length.out = lgt),
+  lambda <- rep(nu_Y_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
+  llik <- -1*dnbinom(observed, mu = lambda, size = rep(1/psi_Y, length.out = lgt),
                         log = TRUE)
   if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
 }
@@ -331,35 +332,37 @@ simulate_hhh4u_seasonal <- function(nu, phi, kappa, psi, q = 1, n_seas = 10,
   }
   X <- tail(X, lgt - burn_in*L)
   lambda <- tail(lambda, lgt - burn_in*L)
-  Y <- rbinom(lgt - burn_in*L, X, q)
-  list(X = X, lambda = lambda, Y = Y)
+  X_tilde <- rbinom(lgt - burn_in*L, X, q)
+  list(X = X, lambda = lambda, X_tilde = X_tilde)
 }
 
-# function to get some empirical second order properties
-emp_sop_seas <- function(Y, L){
-  Y_by_stratum <- matrix(Y, nrow = L)
+# helper function to obtain second-order properties of simulated time series
+emp_sop_seas <- function(observed, L){
+  # bring in matrix form where rows correspond to calendar weeks
+  # and columns to seasons.
+  obs_matrix <- matrix(observed, nrow = L)
 
-  Y_means_emp <- rowMeans(Y_by_stratum)
-  Y_sq_means_emp <- rowMeans(Y_by_stratum^2)
-  Y_var_emp <- apply(Y_by_stratum, 1, var)
+  means_emp <- rowMeans(Y_by_stratum)
+  sq_means_emp <- rowMeans(Y_by_stratum^2)
+  var_emp <- apply(Y_by_stratum, 1, var)
 
-  Y_ar1_emp <- numeric(L)
-  Y_ar1_emp[1] <- cov(Y_by_stratum[1, -1], Y_by_stratum[L, -ncol(Y_by_stratum)])
+  ar1_emp <- numeric(L)
+  ar1_emp[1] <- cov(Y_by_stratum[1, -1], Y_by_stratum[L, -ncol(Y_by_stratum)])
 
   for(i in 2:L){
-    Y_ar1_emp[i] <- cov(Y_by_stratum[i, ], Y_by_stratum[i - 1, ])
+    ar1_emp[i] <- cov(Y_by_stratum[i, ], Y_by_stratum[i - 1, ])
   }
 
-  Y_ar2_emp <- numeric(L)
-  Y_ar2_emp[1] <- cov(Y_by_stratum[1, -1], Y_by_stratum[L - 1, -ncol(Y_by_stratum)])
-  Y_ar2_emp[2] <- cov(Y_by_stratum[2, -1], Y_by_stratum[L, -ncol(Y_by_stratum)])
+  ar2_emp <- numeric(L)
+  ar2_emp[1] <- cov(obs_matrix[1, -1], obs_matrix[L - 1, -ncol(obs_matrix)])
+  ar2_emp[2] <- cov(obs_matrix[2, -1], obs_matrix[L, -ncol(obs_matrix)])
 
   for(i in 3:L){
-    Y_ar2_emp[i] <- cov(Y_by_stratum[i, ], Y_by_stratum[i - 2, ])
+    ar2_emp[i] <- cov(obs_matrix[i, ], obs_matrix[i - 2, ])
   }
 
-  return(list(Y_means_emp = Y_means_emp,
-              Y_var_emp = Y_var_emp,
-              Y_ar1_emp = Y_ar1_emp,
-              Y_ar2_emp = Y_ar2_emp))
+  return(list(means_emp = means_emp,
+              var_emp = var_emp,
+              ar1_emp = ar1_emp,
+              ar2_emp = ar2_emp))
 }

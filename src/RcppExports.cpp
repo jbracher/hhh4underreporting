@@ -159,16 +159,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// nu_to_nu_tilde_seas_cpp
-NumericVector nu_to_nu_tilde_seas_cpp(NumericVector nu, NumericVector kappa, int max_lag);
-RcppExport SEXP _hhh4underreporting_nu_to_nu_tilde_seas_cpp(SEXP nuSEXP, SEXP kappaSEXP, SEXP max_lagSEXP) {
+// nu_to_nu_star_seas_cpp
+NumericVector nu_to_nu_star_seas_cpp(NumericVector nu, NumericVector kappa, int max_lag);
+RcppExport SEXP _hhh4underreporting_nu_to_nu_star_seas_cpp(SEXP nuSEXP, SEXP kappaSEXP, SEXP max_lagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< int >::type max_lag(max_lagSEXP);
-    rcpp_result_gen = Rcpp::wrap(nu_to_nu_tilde_seas_cpp(nu, kappa, max_lag));
+    rcpp_result_gen = Rcpp::wrap(nu_to_nu_star_seas_cpp(nu, kappa, max_lag));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -203,14 +203,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_mod_matr_cpp
-NumericMatrix get_mod_matr_cpp(NumericVector Y, int max_lag);
-RcppExport SEXP _hhh4underreporting_get_mod_matr_cpp(SEXP YSEXP, SEXP max_lagSEXP) {
+NumericMatrix get_mod_matr_cpp(NumericVector observed, int max_lag);
+RcppExport SEXP _hhh4underreporting_get_mod_matr_cpp(SEXP observedSEXP, SEXP max_lagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type observed(observedSEXP);
     Rcpp::traits::input_parameter< int >::type max_lag(max_lagSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_mod_matr_cpp(Y, max_lag));
+    rcpp_result_gen = Rcpp::wrap(get_mod_matr_cpp(observed, max_lag));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -227,7 +227,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_hhh4underreporting_order_back_in_time", (DL_FUNC) &_hhh4underreporting_order_back_in_time, 2},
     {"_hhh4underreporting_stat_mean_seas_cpp", (DL_FUNC) &_hhh4underreporting_stat_mean_seas_cpp, 3},
     {"_hhh4underreporting_stat_var_seas_cpp", (DL_FUNC) &_hhh4underreporting_stat_var_seas_cpp, 4},
-    {"_hhh4underreporting_nu_to_nu_tilde_seas_cpp", (DL_FUNC) &_hhh4underreporting_nu_to_nu_tilde_seas_cpp, 3},
+    {"_hhh4underreporting_nu_to_nu_star_seas_cpp", (DL_FUNC) &_hhh4underreporting_nu_to_nu_star_seas_cpp, 3},
     {"_hhh4underreporting_compute_sop_seas_cpp", (DL_FUNC) &_hhh4underreporting_compute_sop_seas_cpp, 5},
     {"_hhh4underreporting_reparam_seas_cpp", (DL_FUNC) &_hhh4underreporting_reparam_seas_cpp, 5},
     {"_hhh4underreporting_get_mod_matr_cpp", (DL_FUNC) &_hhh4underreporting_get_mod_matr_cpp, 2},

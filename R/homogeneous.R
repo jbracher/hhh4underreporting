@@ -153,6 +153,7 @@ nllik <- function(observed, nu, phi, kappa, psi, q, max_lag = 5, return_contribu
   if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
 }
 
+# helper function to obtain second-order properties of simulated time series
 emp_sop <- function(observed){
   lgt <- length(observed)
   list(

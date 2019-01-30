@@ -106,7 +106,7 @@ List stat_var_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa,
 }
 
 // [[Rcpp::export]]
-NumericVector nu_to_nu_tilde_seas_cpp(NumericVector nu, NumericVector kappa, int max_lag){
+NumericVector nu_to_nu_star_seas_cpp(NumericVector nu, NumericVector kappa, int max_lag){
   return stat_mean_seas_cpp(nu, NumericVector(nu.size()), kappa);
 }
 
@@ -126,15 +126,15 @@ List compute_sop_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kap
   }
   NumericVector decay_X = phi + kappa;
 
-  NumericVector mu_Y = p*mu_X;
-  NumericVector sigma2_Y = pow(p, 2)*sigma2_X + p*(1 - p)*mu_X;
-  NumericVector cov1_Y = pow(p, 2)*cov1_X;
-  NumericVector decay_Y = decay_X;
+  NumericVector mu_X_tilde = p*mu_X;
+  NumericVector sigma2_X_tilde = pow(p, 2)*sigma2_X + p*(1 - p)*mu_X;
+  NumericVector cov1_X_tilde = pow(p, 2)*cov1_X;
+  NumericVector decay_X_tilde = decay_X;
 
-  return Rcpp::List::create(Rcpp::Named("mu_Y") = mu_Y,
-                            Rcpp::Named("v_Y") = sigma2_Y,
-                            Rcpp::Named("cov1_Y") = cov1_Y,
-                            Rcpp::Named("decay_cov_Y") = decay_Y);
+  return Rcpp::List::create(Rcpp::Named("mu_X_tilde") = mu_X_tilde,
+                            Rcpp::Named("v_X_tilde") = sigma2_X_tilde,
+                            Rcpp::Named("cov1_X_tilde") = cov1_X_tilde,
+                            Rcpp::Named("decay_cov_X_tilde") = decay_X_tilde);
 }
 
 // [[Rcpp::export]]
@@ -142,9 +142,9 @@ List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, 
   int L = nu.size();
 
   if(q == 1){
-    return Rcpp::List::create(Rcpp::Named("nu_star") = nu,
-                              Rcpp::Named("phi_star") = phi,
-                              Rcpp::Named("kappa_star") = kappa,
+    return Rcpp::List::create(Rcpp::Named("nu_Y") = nu,
+                              Rcpp::Named("phi_Y") = phi,
+                              Rcpp::Named("kappa_Y") = kappa,
                               Rcpp::Named("psi_star") = psi);
   }
 
@@ -152,20 +152,20 @@ List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, 
   List target_sop = compute_sop_seas_cpp(nu, phi, kappa, psi, q);
 
   // now find a completely observed process with the same properties:
-  NumericVector nu_star = q*nu; // known for theoretical reasons
-  NumericVector phi_plus_kappa_star = phi + kappa;
-  NumericVector mu_X_star = target_sop("mu_Y"); // by definition
-  NumericVector v_X_star = target_sop("v_Y"); // by definition
-  NumericVector cov1_X_star = target_sop("cov1_Y"); // by definition
+  NumericVector nu_Y = q*nu; // known for theoretical reasons
+  NumericVector phi_plus_kappa_Y = phi + kappa;
+  NumericVector mu_Y = target_sop("mu_X_tilde"); // by definition
+  NumericVector v_Y = target_sop("v_X_tilde"); // by definition
+  NumericVector cov1_Y = target_sop("cov1_X_tilde"); // by definition
 
   // for the remaining one the old values are ususally good starting values:
-  NumericVector phi_star = phi;
-  NumericVector kappa_star = kappa;
+  NumericVector phi_Y = phi;
+  NumericVector kappa_Y = kappa;
   NumericVector psi_star = psi;
 
   // given a starting value of psi[L] we can get var_lambda_star[L]
-  NumericVector v_lambda_star(L);
-  v_lambda_star(L - 1) = (v_X_star(L - 1) - mu_X_star(L - 1) - psi_star(L - 1)*pow(mu_X_star(L - 1), 2))/
+  NumericVector v_lambda_Y(L);
+  v_lambda_Y(L - 1) = (v_Y(L - 1) - mu_Y(L - 1) - psi_star(L - 1)*pow(mu_Y(L - 1), 2))/
     (1 + psi_star(L - 1));
 
   // now we can iteratively roll through the weeks and correct the values of phi and kappa
@@ -175,35 +175,35 @@ List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, 
       if(i == 0){
         im1 = L - 1;
       }
-      // correct phi_star[i]
-      phi_star(i) = (cov1_X_star(i) - phi_plus_kappa_star(i)*v_lambda_star(im1) -
-        phi_plus_kappa_star(i)*pow(mu_X_star(im1), 2) -
-        nu_star(i)*mu_X_star(im1) + mu_X_star(i)*mu_X_star(im1))/
-          (v_X_star(im1) - v_lambda_star(im1));
-      kappa_star(i) = phi_plus_kappa_star(i) - phi_star(i);
-      // update v_lambda_star:
-      v_lambda_star(i) = pow(phi_star(i), 2)*v_X_star(im1) +
-        (2*phi_star(i)*kappa_star(i) + pow(kappa_star(i), 2))*v_lambda_star(im1);
+      // correct phi_Y[i]
+      phi_Y(i) = (cov1_Y(i) - phi_plus_kappa_Y(i)*v_lambda_Y(im1) -
+        phi_plus_kappa_Y(i)*pow(mu_Y(im1), 2) -
+        nu_Y(i)*mu_Y(im1) + mu_Y(i)*mu_Y(im1))/
+          (v_Y(im1) - v_lambda_Y(im1));
+      kappa_Y(i) = phi_plus_kappa_Y(i) - phi_Y(i);
+      // update v_lambda_Y:
+      v_lambda_Y(i) = pow(phi_Y(i), 2)*v_Y(im1) +
+        (2*phi_Y(i)*kappa_Y(i) + pow(kappa_Y(i), 2))*v_lambda_Y(im1);
       // now correct psi_star[i]
-      psi_star(i) = (v_X_star(i) - v_lambda_star(i) - mu_X_star(i))/
-        (pow(mu_X_star(i), 2) + v_lambda_star(i));
+      psi_star(i) = (v_Y(i) - v_lambda_Y(i) - mu_Y(i))/
+        (pow(mu_Y(i), 2) + v_lambda_Y(i));
     }
   }
-  return Rcpp::List::create(Rcpp::Named("nu") = nu_star,
-                            Rcpp::Named("phi") = phi_star,
-                            Rcpp::Named("kappa") = kappa_star,
+  return Rcpp::List::create(Rcpp::Named("nu") = nu_Y,
+                            Rcpp::Named("phi") = phi_Y,
+                            Rcpp::Named("kappa") = kappa_Y,
                             Rcpp::Named("psi") = psi_star,
                             Rcpp::Named("q") = 1);
 }
 
 // [[Rcpp::export]]
-NumericMatrix get_mod_matr_cpp(NumericVector Y, int max_lag){
-  int L = Y.size();
+NumericMatrix get_mod_matr_cpp(NumericVector observed, int max_lag){
+  int L = observed.size();
   NumericMatrix mod_matr(L, max_lag);
   for(int ro = 0; ro < L; ro++){
     for(int co = 0; co < max_lag; co++){
       if(ro - co >= 1){
-        mod_matr(ro, co) = Y(ro - co - 1);
+        mod_matr(ro, co) = observed(ro - co - 1);
       }else{
         mod_matr(ro, co) = NA_REAL;
       }
