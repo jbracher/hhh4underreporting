@@ -19,7 +19,7 @@ simulate_hhh4u <- function(nu, phi, kappa, psi, q = 1, lgt = 100,
                    n_seas = lgt, start = start, burn_in = burn_in)
 }
 
-# function to recover second-order properties
+# function to compute second-order properties
 compute_sop <- function(nu, phi, kappa, psi, q, par_list = NULL){
   if(!is.null(par_list)){
     nu <- par_list$nu; phi <- par_list$phi; kappa <- par_list$kappa
@@ -28,7 +28,7 @@ compute_sop <- function(nu, phi, kappa, psi, q, par_list = NULL){
   }
 
   soc <- list()
-  X <- Y <- list()
+  X <- X_tilde <- list()
 
   X$mu <- nu/(1 - phi - kappa)
   X$sigma2 <- (1 - (phi + kappa)^2 + phi^2)/
@@ -36,13 +36,13 @@ compute_sop <- function(nu, phi, kappa, psi, q, par_list = NULL){
   X$g <- phi*(1 - kappa*(phi + kappa))/(1 - (phi + kappa)^2 + phi^2)
   X$h <- phi + kappa
 
-  Y$mu <- q*X$mu
-  Y$sigma2 <- q^2*X$sigma2 + q*(1 - q)*X$mu
-  Y$g <- X$sigma2/(X$sigma2 + (1 - q)/q*X$mu)*X$g
-  Y$h <- phi + kappa
+  X_tilde$mu <- q*X$mu
+  X_tilde$sigma2 <- q^2*X$sigma2 + q*(1 - q)*X$mu
+  X_tilde$g <- X$sigma2/(X$sigma2 + (1 - q)/q*X$mu)*X$g
+  X_tilde$h <- phi + kappa
 
   return(list(X = X,
-              Y = Y))
+              X_tilde = X_tilde))
 }
 
 # function to recover nu, phi, kappa, psi for a given q:
@@ -53,23 +53,20 @@ recover_pars <- function(mu, sigma2, g, h, q = 1, sop_list = NULL){
 
   pars <- NULL
   pars$nu <- mu*(1 - h)/q
-  gamma <- (sigma2 - (1 - q)*mu)/sigma2
-  pars$phi <- (gamma*(1 - h^2) - sqrt(gamma^2*(1 - h^2)^2 - 4*(g - gamma*h)*g*(1 - h^2)))/
-    (2*(g - gamma*h))
+  c <- (sigma2 - (1 - q)*mu)/sigma2
+  pars$phi <- (sqrt(c^2*(1 - h^2)^2 + 4*(c*h - g)*g*(1 - h^2)) - c*(1 - h^2))/
+    (2*(c*h - g))
   pars$kappa <- h - pars$phi
 
-  sigma2_star <- (sigma2 - (1 - q)*mu)/q^2
-  mu_star <- mu/q
-
-  pars$psi <- (sigma2_star*(1 - h^2) - mu_star*(1 - h^2 + pars$phi^2))/
-    (pars$phi^2*sigma2_star + mu_star^2*(1 - h^2 + pars$phi^2))
+  pars$psi <- ((sigma2 - (1 - q)*mu)*(1 - h^2) - q*mu*(1 - h^2 + pars$phi^2))/
+    (pars$phi^2*(sigma2 - (1 - q)*mu) + mu^2*(1 - h^2 + pars$phi^2))
 
   pars$q <- q
   return(pars)
 }
 
 reparam <- function(nu, phi, kappa, psi, q){
-  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$Y
+  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$X_tilde
   recover_pars(sop_list = sop)
 }
 
@@ -89,7 +86,7 @@ reparam <- function(nu, phi, kappa, psi, q){
 #' @return the return object from \code{optim} providing the maximum likelihood estimates
 #' on the log scale.
 #' @export
-fit_hhh4u <- function(Y, q, include_kappa = TRUE,
+fit_hhh4u <- function(observed, q, include_kappa = TRUE,
                     initial = c(log_nu = 2, log_phi = -1, log_kappa = -2, log_psi = -3),
                     max_lag = 5, iter_optim = 3, hessian = FALSE, ...){
 
@@ -104,7 +101,7 @@ fit_hhh4u <- function(Y, q, include_kappa = TRUE,
     phi <- exp(pars["log_phi"])
     kappa <- ifelse(include_kappa, exp(pars["log_kappa"]), -10)
     psi <- exp(pars["log_psi"])
-    nllik(Y = Y, nu = nu, phi = phi, kappa = kappa, psi = psi, q = q, max_lag = max_lag)
+    nllik(observed = observed, nu = nu, phi = phi, kappa = kappa, psi = psi, q = q, max_lag = max_lag)
   }
   # initials <- list(initial,
   #                  initial*c(1.5, 1, 1, 1),
@@ -121,7 +118,7 @@ fit_hhh4u <- function(Y, q, include_kappa = TRUE,
 #' The likelihood approximation is based on an approximation of the process by
 #' a second-order equivalent process with complete reporting.
 #'
-#' @param Y a time series of counts (numeric vector)
+#' @param observed a time series of counts (numeric vector)
 #' @param nu,phi,kappa,psi the model parameters (scalars)
 #' @param q the assumed reporting probability
 #' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
@@ -131,38 +128,38 @@ fit_hhh4u <- function(Y, q, include_kappa = TRUE,
 #' log-likelihood contributions.
 #'
 #' @export
-nllik <- function(Y, nu, phi, kappa, psi, q, max_lag = 5, return_contributions = FALSE){
+nllik <- function(observed, nu, phi, kappa, psi, q, max_lag = 5, return_contributions = FALSE){
   # get second order properties:
-  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$Y
+  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$X_tilde
 
   if(any(unlist(sop) < 0)) return(-Inf)
 
   # get corresponding parameters for unthinned process:
-  pars_star <- recover_pars(q = 1, sop_list = sop)
-  nu_star <- pars_star$nu
-  phi_star <- pars_star$phi
-  kappa_star <- pars_star$kappa
-  psi_star <- pars_star$psi
-  nu_star_tilde <- nu_star/(1 - kappa_star) # move to geometric-lag display
+  pars_Y <- recover_pars(q = 1, sop_list = sop)
+  nu_Y <- pars_Y$nu
+  phi_Y <- pars_Y$phi
+  kappa_Y <- pars_Y$kappa
+  psi_Y <- pars_Y$psi
+  nu_Y_star <- nu_Y/(1 - kappa_Y) # move to geometric-lag display
   q <- 1
   # get likelihood:
-  lgt <- length(Y)
-  mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
+  lgt <- length(observed)
+  mod_matr <- matrix(nrow = length(observed), ncol = max_lag)
   for(i in 1: max_lag){
-    mod_matr[, i] <- c(rep(NA, i), head(Y, lgt - i))
+    mod_matr[, i] <- c(rep(NA, i), head(observed, lgt - i))
   }
-  lin_pred <- nu_star_tilde + mod_matr %*% matrix(phi_star*kappa_star^(1:max_lag - 1), ncol = 1)
-  llik <- - dnbinom(Y, mu = as.vector(lin_pred), size = 1/psi_star, log = TRUE)
+  lin_pred <- nu_Y_star + mod_matr %*% matrix(phi_Y*kappa_Y^(1:max_lag - 1), ncol = 1)
+  llik <- - dnbinom(observed, mu = as.vector(lin_pred), size = 1/psi_Y, log = TRUE)
 
   if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
 }
 
-emp_sop <- function(Y){
-  lgt <- length(Y)
+emp_sop <- function(observed){
+  lgt <- length(observed)
   list(
-    Y_mean_emp = mean(Y),
-    Y_var_emp = var(Y),
-    Y_ar1_emp = cor(head(Y, lgt - 1), tail(Y, lgt - 1)),
-    Y_ar2_emp = cor(head(Y, lgt - 2), tail(Y, lgt - 2))
+    mean = mean(observed),
+    var = var(observed),
+    ar1 = cor(head(observed, lgt - 1), tail(observed, lgt - 1)),
+    ar2 = cor(head(observed, lgt - 2), tail(observed, lgt - 2))
   )
 }
