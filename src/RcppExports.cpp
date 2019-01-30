@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // compute_sop_cov_cpp
-List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
-RcppExport SEXP _hhh4underreporting_compute_sop_cov_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
+List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q);
+RcppExport SEXP _hhh4underreporting_compute_sop_cov_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -17,14 +17,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_sop_cov_cpp(m1, vl1, nu, phi, kappa, psi, p));
+    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_sop_cov_cpp(m1, vl1, nu, phi, kappa, psi, q));
     return rcpp_result_gen;
 END_RCPP
 }
 // reparam_cov_cpp
-List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
-RcppExport SEXP _hhh4underreporting_reparam_cov_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
+List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q);
+RcppExport SEXP _hhh4underreporting_reparam_cov_cpp(SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -34,8 +34,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, p));
+    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, q));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -65,8 +65,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // nllik_cov_cpp
-double nllik_cov_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p, int max_lag);
-RcppExport SEXP _hhh4underreporting_nllik_cov_cpp(SEXP YSEXP, SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP, SEXP max_lagSEXP) {
+double nllik_cov_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q, int max_lag);
+RcppExport SEXP _hhh4underreporting_nllik_cov_cpp(SEXP YSEXP, SEXP m1SEXP, SEXP vl1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP, SEXP max_lagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,20 +77,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    Rcpp::traits::input_parameter< double >::type q(qSEXP);
     Rcpp::traits::input_parameter< int >::type max_lag(max_lagSEXP);
-    rcpp_result_gen = Rcpp::wrap(nllik_cov_cpp(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag));
-    return rcpp_result_gen;
-END_RCPP
-}
-// timesTwo
-NumericVector timesTwo(NumericVector x);
-RcppExport SEXP _hhh4underreporting_timesTwo(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(timesTwo(x));
+    rcpp_result_gen = Rcpp::wrap(nllik_cov_cpp(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -199,8 +188,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // reparam_seas_cpp
-List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
-RcppExport SEXP _hhh4underreporting_reparam_seas_cpp(SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
+List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q);
+RcppExport SEXP _hhh4underreporting_reparam_seas_cpp(SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -208,8 +197,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(reparam_seas_cpp(nu, phi, kappa, psi, p));
+    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(reparam_seas_cpp(nu, phi, kappa, psi, q));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -232,7 +221,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_hhh4underreporting_get_weight_matrix_cov_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_cov_cpp, 3},
     {"_hhh4underreporting_nu_to_nu_tilde_cov_cpp", (DL_FUNC) &_hhh4underreporting_nu_to_nu_tilde_cov_cpp, 2},
     {"_hhh4underreporting_nllik_cov_cpp", (DL_FUNC) &_hhh4underreporting_nllik_cov_cpp, 9},
-    {"_hhh4underreporting_timesTwo", (DL_FUNC) &_hhh4underreporting_timesTwo, 1},
     {"_hhh4underreporting_back_seas_cpp", (DL_FUNC) &_hhh4underreporting_back_seas_cpp, 3},
     {"_hhh4underreporting_get_weight_matrix_seas_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_seas_cpp, 3},
     {"_hhh4underreporting_prod", (DL_FUNC) &_hhh4underreporting_prod, 1},

@@ -5,9 +5,8 @@
 #'
 #' @param lambda1 the initial mean
 #' @param alpha_nu,beta_nu,phi,kappa,psi the parameters of the latent model
-#' @param p the reporting probability
+#' @param q the reporting probability
 #' @param z a covariate entering into the endemic parameter $nu$
-#' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period)
 #' @return A named list with elements \code{"X"} and \code{"Y"} containing the unthinned and thinned simulated time series.
 #' @examples
 #' # define a covariate:
@@ -19,17 +18,17 @@
 #' phi <- 0.5
 #' kappa <- 0.2
 #' psi <- 0.1
-#' p <- 0.5
+#' q <- 0.5
 #' sim <- generate_ar_cov(lambda1 = lambda1,
 #'                        alpha_nu = alpha_nu,
 #'                        beta_nu = beta_nu,
 #'                        phi = phi,
 #'                        kappa = kappa,
 #'                        psi = psi,
-#'                        p = p,
+#'                        q = q,
 #'                        z = z)
 #' @export
-generate_ar_cov <- function(lambda1, alpha_nu, beta_nu, phi, kappa, psi, p = 1, z){
+simulate_hhh4u_covariate <- function(lambda1, alpha_nu, beta_nu, phi, kappa, psi, q = 1, z){
   lgt = length(z)
 
   # compute nu:
@@ -44,7 +43,7 @@ generate_ar_cov <- function(lambda1, alpha_nu, beta_nu, phi, kappa, psi, p = 1, 
     X[t] <- rnbinom(1, mu = lambda[t], size = 1/psi)
   }
 
-  Y <- rbinom(lgt, X, p)
+  Y <- rbinom(n = lgt, size = X, prob = q)
   return(list(X = X, Y = Y))
 }
 
@@ -58,7 +57,7 @@ cond_mean_cov <- function(m1, nu, phi, kappa){
   return(mu)
 }
 
-compute_sop_cov <- function(m1, vl1, nu, phi, kappa, psi, p, compute_Sigma = FALSE){
+compute_sop_cov <- function(m1, vl1, nu, phi, kappa, psi, q, compute_Sigma = FALSE){
   lgt <- length(nu)
   # get means:
   mu_X <- cond_mean_cov(m1 = m1, nu = nu,  phi = phi, kappa = kappa)
@@ -95,15 +94,15 @@ compute_sop_cov <- function(m1, vl1, nu, phi, kappa, psi, p, compute_Sigma = FAL
         cov_X[ro, co] <- (phi[co] + kappa[co])*cov_X[ro, co - 1]
       }
     }
-    cov_Y <- p^2*cov_X + p*(1 - p)*diag(mu_X)
+    cov_Y <- q^2*cov_X + q*(1 - q)*diag(mu_X)
   }else{
     cov_X <- cov_Y <- NULL
   }
 
   # thinning:
-  mu_Y <- p*mu_X
-  v_Y <- p^2*v_X + p*(1 - p)*mu_X
-  cov1_Y <- p^2*cov1_X
+  mu_Y <- q*mu_X
+  v_Y <- q^2*v_X + q*(1 - q)*mu_X
+  cov1_Y <- q^2*cov1_X
 
   return(list(mu_X = mu_X, v_X = v_X, cov1_X = cov1_X,
               decay_cov_X = phi + kappa,  cov_X = cov_X, v_lambda = v_lambda,
@@ -112,10 +111,10 @@ compute_sop_cov <- function(m1, vl1, nu, phi, kappa, psi, p, compute_Sigma = FAL
 }
 
 
-reparam_cov <- function(m1, vl1, nu, phi, kappa, psi, p){
+reparam_cov <- function(m1, vl1, nu, phi, kappa, psi, q){
   lgt <- length(nu)
   # compute target second-order properties:
-  target_sop <- compute_sop_cov(m1 = m1, vl1 = vl1, nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)
+  target_sop <- compute_sop_cov(m1 = m1, vl1 = vl1, nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)
 
   # now find a completely observed process with the same properties:
   nu_star <- p*nu # known for theoretical reasons (?)
@@ -124,7 +123,7 @@ reparam_cov <- function(m1, vl1, nu, phi, kappa, psi, p){
   mu_X_star <- target_sop$mu_Y
   phi_star <- kappa_star <- psi_star <- v_lambda_star <- numeric(lgt)
 
-  v_lambda_star[1] <- p^2*vl1
+  v_lambda_star[1] <- q^2*vl1
   psi_star[1] <- psi[1]
 
   v_X_star <- target_sop$v_Y # by definition
@@ -153,7 +152,7 @@ reparam_cov <- function(m1, vl1, nu, phi, kappa, psi, p){
   # if(all.equal(target_sop$v_Y, current_sop$v_Y)) print("worked")
 
   return(list(m1 = mu_X_star[1], vl1 = v_lambda_star[1], nu = nu_star, phi = phi_star, kappa = kappa_star,
-              psi = psi_star, p = 1))
+              psi = psi_star, q = 1))
 }
 
 # auxiliary function to get weight matrix for lags:
@@ -195,7 +194,7 @@ nu_to_nu_tilde_cov <- function(nu, kappa, max_lag){
 #' @param vl1 the initial variance of lambda, i.e. $Var(lambda_1)$
 #' @param nu,phi,kappa,psi the time-varying model parameters (vectors of same length)
 #' @param psi overdispersion parameter (scalar)
-#' @param p the assumed reporting probability
+#' @param q the assumed reporting probability
 #' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
 #' @param return_contributions shall the log-likelihood contributions of each time point be
 #' returned (as vector)?
@@ -204,7 +203,7 @@ nu_to_nu_tilde_cov <- function(nu, kappa, max_lag){
 #' log-likelihood contributions.
 #'
 #' @export
-llik_cov <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_contributions = FALSE){
+llik_cov <- function(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag = 5, return_contributions = FALSE){
   lgt <- length(Y)
   # get model matrix:
   mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
@@ -214,7 +213,7 @@ llik_cov <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_con
 
   # get corresponding parameters for unthinned process:
   pars_star <- reparam_cov(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
-                         kappa = kappa, psi = psi, p = p)
+                         kappa = kappa, psi = psi, q = q)
   m1_star <- pars_star$m1
   vl1_star <- pars_star$vl1
   nu_star <- pars_star$nu
@@ -236,14 +235,14 @@ llik_cov <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5, return_con
 }
 
 # version where the cpp bits are held together by R code.
-llik_cov_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
+llik_cov_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag = 5){
   lgt <- length(Y)
   # get model matrix:
   mod_matr <- get_mod_matr_cpp(Y = Y, max_lag = max_lag)
 
   # get corresponding parameters for unthinned process:
   pars_star <- reparam_cov_cpp(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
-                             kappa = kappa, psi = psi, p = p)
+                             kappa = kappa, psi = psi, q = q)
   m1_star <- pars_star$m1
   vl1_star <- pars_star$vl1
   nu_star <- pars_star$nu
@@ -272,7 +271,7 @@ llik_cov_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 #' information on it) and thus needs to be specified in advance.
 #'
 #' @param Y a time series of counts (numeric vector)
-#' @param p the assumed reporting probability
+#' @param q the assumed reporting probability
 #' @param m1 the initial mean, i.e. $E(lambda_1)$
 #' @param vl1 the initial variance of lambda, i.e. $Var(lambda_1)$
 #' @param covariate the values of the covariate entering into the endemic component (numeric vector)
@@ -282,7 +281,7 @@ llik_cov_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, p, max_lag = 5){
 #' @return the return object from \code{optim} providing the maximum likelihood estimates
 #' (mostly on the log scale).
 #' @export
-fit_lik_cov <- function(Y, p, m1, vl1, covariate,
+fit_hhh4u_covariate <- function(Y, q, m1, vl1, covariate,
                       initial = c(alpha_nu = 4, beta_nu = 0,
                                   alpha_phi = -1,
                                   alpha_kappa = -1, log_psi = -3),
@@ -296,7 +295,7 @@ fit_lik_cov <- function(Y, p, m1, vl1, covariate,
     psi <- rep(exp(pars["log_psi"]), lgt)
     nllik_cov_cpp(Y = Y, m1 = m1, vl1 = vl1,
                 nu = nu, phi = phi, kappa = kappa, psi = psi,
-                p = p, max_lag = max_lag)
+                q = q, max_lag = max_lag)
   }
 
   opt <- optim(par = initial, fn = nllik_vect, ...)

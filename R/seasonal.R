@@ -68,7 +68,7 @@ stat_var_seas <- function(nu, phi, kappa, psi){
 }
 
 # wrapper: get stationary properties:
-compute_sop_seas <- function(nu, phi, kappa, psi, p){
+compute_sop_seas <- function(nu, phi, kappa, psi, q){
   mu_X <- stat_mean_seas_cpp(nu, phi, kappa)
   sigma2_X <- stat_var_seas_cpp(nu, phi, kappa, psi)$stat_var_X
   inds_shifted <- c(length(phi), 1:(length(phi) - 1))
@@ -77,9 +77,9 @@ compute_sop_seas <- function(nu, phi, kappa, psi, p){
     (1 + psi[inds_shifted])
   decay_X <- phi + kappa
 
-  mu_Y <- p*mu_X
-  sigma2_Y <- p^2*sigma2_X + p*(1 - p)*mu_X # hier weitermachen!!! beide Manuskripte ansehen.
-  cov1_Y <- p^2*cov1_X
+  mu_Y <- q*mu_X
+  sigma2_Y <- q^2*sigma2_X + q*(1 - q)*mu_X
+  cov1_Y <- q^2*cov1_X
   decay_Y <- decay_X
 
   return(list(mu_X = mu_X, sigma2_X = sigma2_X,
@@ -89,15 +89,15 @@ compute_sop_seas <- function(nu, phi, kappa, psi, p){
 }
 
 
-reparam_seas <- function(nu, phi, kappa, psi, p){
+reparam_seas <- function(nu, phi, kappa, psi, q){
   L <- length(nu)
 
-  if(p == 1) return(list(nu = nu, phi = phi, kappa = kappa, psi = psi, p = 1))
+  if(q == 1) return(list(nu = nu, phi = phi, kappa = kappa, psi = psi, q = 1))
 
-  target_sop <- compute_sop_seas(nu, phi, kappa, psi, p)
+  target_sop <- compute_sop_seas(nu, phi, kappa, psi, q)
 
   # now find a completely observed process with the same properties:
-  nu_star <- p*nu # known for theoretical reasons
+  nu_star <- q*nu # known for theoretical reasons
   phi_plus_kappa_star <- target_sop$decay_cov_Y # this, too.
   mu_X_star <- target_sop$mu_Y # by definition
   v_X_star <- target_sop$v_Y # by definition
@@ -131,7 +131,7 @@ reparam_seas <- function(nu, phi, kappa, psi, p){
         (mu_X_star[i]^2 + v_lambda_star[i])
     }
   }
-  return(list(nu = nu_star, phi = phi_star, kappa = kappa_star, psi = psi_star, p = 1))
+  return(list(nu = nu_star, phi = phi_star, kappa = kappa_star, psi = psi_star, q = 1))
 }
 
 # function for obtaining "shifted" nu necessary for observation-driven formulation
@@ -183,7 +183,7 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
 #'
 #' @param Y a time series of counts (numeric vector)
 #' @param L the number of observations per period (integer; e.g. 52 for weekly data and yearly seasonality)
-#' @param p the assumed reporting probability
+#' @param q the assumed reporting probability
 #' @param seas_phi should seasonality also be accounted for in the autoregressive parameter $phi$?
 #' or only in the immigration parameter $nu$?
 #' @param include_kappa should the parameter $kappa$ and thus lagged versions of the conditional expectation $lambda$ be included?
@@ -193,7 +193,7 @@ get_weight_matrix_seas <- function(phi, kappa, max_lag){
 #' @return the return object from \code{optim} providing the maximum likelihood estimates
 #' (mostly on the log scale).
 #' @export
-fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, include_kappa = TRUE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
+fit_hhh4u_seasonal <- function(Y, L, q, seas_phi = FALSE, include_kappa = TRUE, initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0,
                                               alpha_phi = -1, gamma_phi = 0, delta_phi = 0,
                                               alpha_kappa = -1, log_psi = -3),
                          max_lag = 10, iter_optim = 3, ...){
@@ -218,19 +218,14 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, include_kappa = TRUE, initia
     nllik_seas(Y = Y,
              alpha_nu = alpha_nu, gamma_nu = gamma_nu, delta_nu = delta_nu,
              alpha_phi = alpha_phi, gamma_phi = gamma_phi, delta_phi = delta_phi,
-             alpha_kappa = alpha_kappa, psi = psi, p = p, L = L, max_lag = max_lag)
+             alpha_kappa = alpha_kappa, psi = psi, q = q, L = L, max_lag = max_lag)
   }
-  # initials <- list(initial,
-  #                 initial*c(1.5, rep(1, length(initial) - 1)),
-  #                 initial*c(0.5, rep(1, length(initial) - 1)))
+
   opt <- optim(par = initial, fn = lik_vect,...)
   for(i in 1:iter_optim){
     opt <- optim(par = opt$par, fn = lik_vect,...)
   }
-  # for(i in 2:3){
-  #   opt_temp <- optim(par = initials[[i]], fn = lik_vect,...)
-  #   if(opt_temp$value < opt$value) opt <- opt_temp
-  # }
+
   return(opt)
 }
 
@@ -243,7 +238,7 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, include_kappa = TRUE, initia
 #' @param alpha_nu,gamma_nu,delta_nu the endemic model parameters (scalar)
 #' @param alpha_phi,gamma_phi,delta_phi,alpha_kappa the autoregressive model parameters (scalars)
 #' @param psi overdispersion parameter (scalar)
-#' @param p the assumed reporting probability
+#' @param q the assumed reporting probability
 #' @param L the period length (integer; e.g. 52 for weekly data and yearly seasonality)
 #' @param max_lag in evaluation of likelihood only lags up to max_lag are taken into account
 #' @param return_contributions shall the log-likelihood contributions of each time point be
@@ -255,7 +250,7 @@ fit_lik_seas <- function(Y, L, p, seas_phi = FALSE, include_kappa = TRUE, initia
 #' @export
 nllik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
                      alpha_phi, gamma_phi = 0, delta_phi = 0,
-                     alpha_kappa, psi, p, L, max_lag = 5, return_contributions = FALSE){
+                     alpha_kappa, psi, q, L, max_lag = 5, return_contributions = FALSE){
   lgt <- length(Y)
   # get model matrix:
   # mod_matr <- matrix(nrow = length(Y), ncol = max_lag)
@@ -272,12 +267,12 @@ nllik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
   psi <- rep(psi, L)
 
   # get second order properties:
-  sop <- compute_sop_seas(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)
+  sop <- compute_sop_seas(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)
 
   if(any(unlist(sop) < 0)) return(-Inf)
 
   # get corresponding parameters for unthinned process:
-  pars_star <- reparam_seas_cpp(nu = nu, phi = phi, kappa = kappa, psi = psi, p = p)
+  pars_star <- reparam_seas_cpp(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)
   nu_star <- pars_star$nu
   phi_star <- pars_star$phi
   kappa_star <- pars_star$kappa
@@ -305,13 +300,13 @@ nllik_seas <- function(Y, alpha_nu, gamma_nu, delta_nu,
 #' to reach stationary phase.
 #'
 #' @param nu,phi,kappa,psi the model parameters (vectors of equal length representing one period)
-#' @param p the reporting probability
+#' @param q the reporting probability
 #' @param n_seas the number of seasons to simulate (integer)
 #' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period)
 #' @param burn_in number of seasons to discard to reach stationary phase
 #' @return A named list with elements \code{"X"} and \code{"Y"} containing the unthinned and thinned simulated time series.
 #' @export
-generate_ar_seas <- function(nu, phi, kappa, psi, p = 1, n_seas = 10,
+simulate_hhh4u_seasonal <- function(nu, phi, kappa, psi, q = 1, n_seas = 10,
                              start = 10, burn_in = 10){
   L <- length(nu)
   lgt <- L*(n_seas + burn_in)
@@ -336,7 +331,7 @@ generate_ar_seas <- function(nu, phi, kappa, psi, p = 1, n_seas = 10,
   }
   X <- tail(X, lgt - burn_in*L)
   lambda <- tail(lambda, lgt - burn_in*L)
-  Y <- rbinom(lgt - burn_in*L, X, p)
+  Y <- rbinom(lgt - burn_in*L, X, q)
   list(X = X, lambda = lambda, Y = Y)
 }
 

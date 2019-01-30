@@ -13,7 +13,7 @@ NumericVector cond_mean_cov_cpp(double m1, NumericVector nu, NumericVector phi, 
 
 // [[Rcpp::export]]
 List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu,
-                             NumericVector phi, NumericVector kappa, NumericVector psi, double p){
+                             NumericVector phi, NumericVector kappa, NumericVector psi, double q){
   int lgt = nu.size();
   NumericVector mu_X(lgt);
   mu_X(0) = m1;
@@ -34,9 +34,9 @@ List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu,
   }
 
   // thinning:
-  NumericVector mu_Y = p*mu_X;
-  NumericVector v_Y = pow(p, 2)*v_X + p*(1 - p)*mu_X;
-  NumericVector cov1_Y = pow(p, 2)*cov1_X;
+  NumericVector mu_Y = q*mu_X;
+  NumericVector v_Y = pow(q, 2)*v_X + q*(1 - q)*mu_X;
+  NumericVector cov1_Y = pow(q, 2)*cov1_X;
 
   return Rcpp::List::create(Rcpp::Named("mu_X") = mu_X, Rcpp::Named("v_X") = v_X,
                             Rcpp::Named("cov1_X") = cov1_X, Rcpp::Named("decay_cov_X") = phi + kappa,
@@ -47,13 +47,13 @@ List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu,
 
 // [[Rcpp::export]]
 List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi, NumericVector kappa,
-                   NumericVector psi, double p){
+                   NumericVector psi, double q){
   int lgt = nu.size();
   // compute target second-order properties:
-  List target_sop = compute_sop_cov_cpp(m1, vl1, nu, phi, kappa, psi, p);
+  List target_sop = compute_sop_cov_cpp(m1, vl1, nu, phi, kappa, psi, q);
 
   // now find a completely observed process with the same properties:
-  NumericVector nu_star = p*nu; // known for theoretical reasons (?)
+  NumericVector nu_star = q*nu; // known for theoretical reasons (?)
   NumericVector phi_plus_kappa_star = phi + kappa; // this, too.
 
   // extract:
@@ -68,7 +68,7 @@ List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi,
   NumericVector v_lambda_star(lgt);
 
   // first elements are known:
-  v_lambda_star(0) = pow(p, 2)*vl1;
+  v_lambda_star(0) = pow(q, 2)*vl1;
   psi_star(0) = psi(0);
 
   // element [1, 1] is correct by construction (thinning property of NB), the others can be adapted step by step.
@@ -89,7 +89,7 @@ List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi,
   }
   return Rcpp::List::create(Rcpp::Named("m1") = mu_X_star(0), Rcpp::Named("vl1") = v_lambda_star(0),
                             Rcpp::Named("nu") = nu_star, Rcpp::Named("phi") = phi_star, Rcpp::Named("kappa") = kappa_star,
-                            Rcpp::Named("psi") = psi_star, Rcpp::Named("p") = 1);
+                            Rcpp::Named("psi") = psi_star, Rcpp::Named("q") = 1);
 }
 
 
@@ -135,12 +135,12 @@ NumericMatrix get_mod_matr_cov_cpp(NumericVector Y, int max_lag){
 
 // [[Rcpp::export]]
 double nllik_cov_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, NumericVector phi,
-                 NumericVector kappa, NumericVector psi, double p, int max_lag = 5){
+                 NumericVector kappa, NumericVector psi, double q, int max_lag = 5){
   int lgt = Y.size();
   // get model matrix:
   NumericMatrix mod_matr = get_mod_matr_cov_cpp(Y, max_lag);
   // get corresponding parameters for unthinned process:
-  List pars_star = reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, p);
+  List pars_star = reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, q);
   // extract:
   double m1_star = pars_star("m1");
   double vl1_star = pars_star("vl1");

@@ -1,21 +1,6 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-// This is a simple example of exporting a C++ function to R. You can
-// source this function into an R session using the Rcpp::sourceCpp
-// function (or via the Source button on the editor toolbar). Learn
-// more about Rcpp at:
-//
-//   http://www.rcpp.org/
-//   http://adv-r.had.co.nz/Rcpp.html
-//   http://gallery.rcpp.org/
-//
-
-// [[Rcpp::export]]
-NumericVector timesTwo(NumericVector x) {
-  return x * 2;
-}
-
 // [[Rcpp::export]]
 NumericVector back_seas_cpp(NumericVector vect, int to, int lgt) {
   int L = vect.size();
@@ -153,10 +138,10 @@ List compute_sop_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kap
 }
 
 // [[Rcpp::export]]
-List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p){
+List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q){
   int L = nu.size();
 
-  if(p == 1){
+  if(q == 1){
     return Rcpp::List::create(Rcpp::Named("nu_star") = nu,
                               Rcpp::Named("phi_star") = phi,
                               Rcpp::Named("kappa_star") = kappa,
@@ -164,10 +149,10 @@ List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, 
   }
 
   // compute the second-order properties:
-  List target_sop = compute_sop_seas_cpp(nu, phi, kappa, psi, p);
+  List target_sop = compute_sop_seas_cpp(nu, phi, kappa, psi, q);
 
   // now find a completely observed process with the same properties:
-  NumericVector nu_star = p*nu; // known for theoretical reasons
+  NumericVector nu_star = q*nu; // known for theoretical reasons
   NumericVector phi_plus_kappa_star = phi + kappa;
   NumericVector mu_X_star = target_sop("mu_Y"); // by definition
   NumericVector v_X_star = target_sop("v_Y"); // by definition
@@ -208,7 +193,7 @@ List reparam_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, 
                             Rcpp::Named("phi") = phi_star,
                             Rcpp::Named("kappa") = kappa_star,
                             Rcpp::Named("psi") = psi_star,
-                            Rcpp::Named("p") = 1);
+                            Rcpp::Named("q") = 1);
 }
 
 // [[Rcpp::export]]
