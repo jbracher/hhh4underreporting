@@ -78,7 +78,7 @@ reparam <- function(nu, phi, kappa, psi, q){
 #' estimated from the data (in most cases these contain no information on it) and thus needs to be
 #' specified in advance.
 #'
-#' @param Y a time series of counts (numeric vector)
+#' @param observed a time series of counts (numeric vector)
 #' @param q the assumed reporting probability
 #' @param initial the initial value of the parameter vector passed to optim
 #' (note: the function tries different starting values in any case)
@@ -103,10 +103,9 @@ fit_hhh4u <- function(observed, q, include_kappa = TRUE,
     psi <- exp(pars["log_psi"])
     nllik(observed = observed, nu = nu, phi = phi, kappa = kappa, psi = psi, q = q, max_lag = max_lag)
   }
-  # initials <- list(initial,
-  #                  initial*c(1.5, 1, 1, 1),
-  #                  initial*c(0.5, 1, 1, 1))
+
   opt <- optim(par = initial, fn = nllik_vect, hessian = hessian, ...)
+  # re-run optimization starting from previous optimum (improves convergence)
   for(i in 1:iter_optim){
     opt <- optim(par = opt$par, fn = nllik_vect, hessian = hessian, ...)
   }
