@@ -13,8 +13,8 @@ get_weight_matrix_cov_cpp <- function(phi, kappa, max_lag) {
     .Call('_hhh4underreporting_get_weight_matrix_cov_cpp', PACKAGE = 'hhh4underreporting', phi, kappa, max_lag)
 }
 
-nu_to_nu_tilde_cov_cpp <- function(nu, kappa) {
-    .Call('_hhh4underreporting_nu_to_nu_tilde_cov_cpp', PACKAGE = 'hhh4underreporting', nu, kappa)
+nu_to_nu_star_cov_cpp <- function(nu, kappa) {
+    .Call('_hhh4underreporting_nu_to_nu_star_cov_cpp', PACKAGE = 'hhh4underreporting', nu, kappa)
 }
 
 nllik_cov_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag = 5L) {

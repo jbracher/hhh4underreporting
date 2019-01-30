@@ -43,8 +43,8 @@ simulate_hhh4u_covariate <- function(lambda1, alpha_nu, beta_nu, phi, kappa, psi
     X[t] <- rnbinom(1, mu = lambda[t], size = 1/psi)
   }
 
-  Y <- rbinom(n = lgt, size = X, prob = q)
-  return(list(X = X, Y = Y))
+  X_tilde <- rbinom(n = lgt, size = X, prob = q)
+  return(list(X = X, X_tilde = X_tilde))
 }
 
 cond_mean_cov <- function(m1, nu, phi, kappa){
@@ -94,20 +94,20 @@ compute_sop_cov <- function(m1, vl1, nu, phi, kappa, psi, q, compute_Sigma = FAL
         cov_X[ro, co] <- (phi[co] + kappa[co])*cov_X[ro, co - 1]
       }
     }
-    cov_Y <- q^2*cov_X + q*(1 - q)*diag(mu_X)
+    cov_X_tilde <- q^2*cov_X + q*(1 - q)*diag(mu_X)
   }else{
-    cov_X <- cov_Y <- NULL
+    cov_X <- cov_X_tilde <- NULL
   }
 
   # thinning:
-  mu_Y <- q*mu_X
-  v_Y <- q^2*v_X + q*(1 - q)*mu_X
-  cov1_Y <- q^2*cov1_X
+  mu_X_tilde <- q*mu_X
+  v_X_tilde <- q^2*v_X + q*(1 - q)*mu_X
+  cov1_X_tilde <- q^2*cov1_X
 
   return(list(mu_X = mu_X, v_X = v_X, cov1_X = cov1_X,
               decay_cov_X = phi + kappa,  cov_X = cov_X, v_lambda = v_lambda,
-              mu_Y = mu_Y, v_Y = v_Y, cov1_Y = cov1_Y,
-              decay_cov_Y = phi + kappa, cov_Y = cov_Y))
+              mu_X_tilde = mu_X_tilde, v_X_tilde = v_X_tilde, cov1_X_tilde = cov1_X_tilde,
+              decay_cov_X_tilde = phi + kappa, cov_X_tilde = cov_X_tilde))
 }
 
 
@@ -117,42 +117,42 @@ reparam_cov <- function(m1, vl1, nu, phi, kappa, psi, q){
   target_sop <- compute_sop_cov(m1 = m1, vl1 = vl1, nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)
 
   # now find a completely observed process with the same properties:
-  nu_star <- p*nu # known for theoretical reasons (?)
-  phi_plus_kappa_star <- phi + kappa # this, too.
+  nu_Y <- p*nu # known for theoretical reasons (?)
+  phi_plus_kappa_Y <- phi + kappa # this, too.
 
-  mu_X_star <- target_sop$mu_Y
-  phi_star <- kappa_star <- psi_star <- v_lambda_star <- numeric(lgt)
+  mu_Y <- target_sop$mu_Y
+  phi_Y <- kappa_Y <- psi_Y <- v_lambda_Y <- numeric(lgt)
 
-  v_lambda_star[1] <- q^2*vl1
-  psi_star[1] <- psi[1]
+  v_lambda_Y[1] <- q^2*vl1
+  psi_Y[1] <- psi[1]
 
-  v_X_star <- target_sop$v_Y # by definition
-  cov1_X_star <- target_sop$cov1_Y # by definition
-  phi_plus_kappa_star <- target_sop$decay_cov_Y
+  v_Y <- target_sop$v_Y # by definition
+  cov1_Y <- target_sop$cov1_Y # by definition
+  phi_plus_kappa_Y <- target_sop$decay_cov_Y
 
   # element [1, 1] is correct by construction (thinning property of NB), the others can be adapted step by step.
   # done in loop:
   for(i in 2:lgt){
-    # correct phi_star[i]
-    phi_star[i] <- (cov1_X_star[i] - phi_plus_kappa_star[i]*v_lambda_star[i - 1] -
-                      phi_plus_kappa_star[i]*mu_X_star[i - 1]^2 -
-                      nu_star[i]*mu_X_star[i - 1] + mu_X_star[i]*mu_X_star[i - 1])/
-      (v_X_star[i - 1] - v_lambda_star[i - 1])
-    kappa_star[i] <- phi_plus_kappa_star[i] - phi_star[i]
-    # update v_lambda_star:
-    v_lambda_star[i] <- phi_star[i]^2*v_X_star[i - 1] +
-      (2*phi_star[i]*kappa_star[i] + kappa_star[i]^2)*v_lambda_star[i - 1]
-    # now correct psi_star[i]
-    psi_star[i] <- (v_X_star[i] - v_lambda_star[i] - mu_X_star[i])/
-      (mu_X_star[i]^2 + v_lambda_star[i])
+    # correct phi_Y[i]
+    phi_Y[i] <- (cov1_Y[i] - phi_plus_kappa_Y[i]*v_lambda_Y[i - 1] -
+                      phi_plus_kappa_Y[i]*mu_Y[i - 1]^2 -
+                      nu_Y[i]*mu_Y[i - 1] + mu_Y[i]*mu_Y[i - 1])/
+      (v_Y[i - 1] - v_lambda_Y[i - 1])
+    kappa_Y[i] <- phi_plus_kappa_Y[i] - phi_Y[i]
+    # update v_lambda_Y:
+    v_lambda_Y[i] <- phi_Y[i]^2*v_Y[i - 1] +
+      (2*phi_Y[i]*kappa_Y[i] + kappa_Y[i]^2)*v_lambda_Y[i - 1]
+    # now correct psi_Y[i]
+    psi_Y[i] <- (v_Y[i] - v_lambda_Y[i] - mu_Y[i])/
+      (mu_Y[i]^2 + v_lambda_Y[i])
   }
 
-  # current_sop <- compute_sop_cov(m1 = mu_X_star[1], vl1 = v_lambda_star[1], nu = nu_star,
-  #                              phi = phi_star, kappa = kappa_star, psi = psi_star, p = 1)
+  # current_sop <- compute_sop_cov(m1 = mu_Y[1], vl1 = v_lambda_Y[1], nu = nu_Y,
+  #                              phi = phi_Y, kappa = kappa_Y, psi = psi_Y, p = 1)
   # if(all.equal(target_sop$v_Y, current_sop$v_Y)) print("worked")
 
-  return(list(m1 = mu_X_star[1], vl1 = v_lambda_star[1], nu = nu_star, phi = phi_star, kappa = kappa_star,
-              psi = psi_star, q = 1))
+  return(list(m1 = mu_Y[1], vl1 = v_lambda_Y[1], nu = nu_Y, phi = phi_Y, kappa = kappa_Y,
+              psi = psi_Y, q = 1))
 }
 
 # auxiliary function to get weight matrix for lags:
@@ -173,7 +173,7 @@ get_weight_matrix_cov <- function(phi, kappa, max_lag){
 }
 
 # function for obtaining "shifted" nu necessary for observation-driven formulation
-nu_to_nu_tilde_cov <- function(nu, kappa, max_lag){
+nu_to_nu_star_cov <- function(nu, kappa, max_lag){
   lgt <- length(nu)
   nu_transformed <- nu
   for(i in 1:max_lag){
@@ -214,21 +214,21 @@ llik_cov <- function(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag = 5, return_con
   # get corresponding parameters for unthinned process:
   pars_star <- reparam_cov(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
                          kappa = kappa, psi = psi, q = q)
-  m1_star <- pars_star$m1
-  vl1_star <- pars_star$vl1
-  nu_star <- pars_star$nu
-  phi_star <- pars_star$phi
-  kappa_star <- pars_star$kappa
-  psi_star <- pars_star$psi
+  m1_Y <- pars_star$m1
+  vl1_Y <- pars_star$vl1
+  nu_Y <- pars_star$nu
+  phi_Y <- pars_star$phi
+  kappa_Y <- pars_star$kappa
+  psi_Y <- pars_star$psi
 
-  nu_star_tilde <- nu_to_nu_tilde_cov(nu = nu_star, kappa = kappa_star, max_lag = max_lag)
+  nu_Y_star <- nu_to_nu_star_cov(nu = nu_Y, kappa = kappa_Y, max_lag = max_lag)
 
   # get weight matrix:
-  weight_matrix <- get_weight_matrix_cov(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
+  weight_matrix <- get_weight_matrix_cov(phi = phi_Y, kappa = kappa_Y, max_lag = max_lag)
 
   # get likelihood:
-  lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
-  llik <- dnbinom(Y, mu = lambda, size = 1/psi_star,
+  lambda <- rep(nu_Y_star, length.out = lgt) + rowSums(weight_matrix*mod_matr)
+  llik <- dnbinom(Y, mu = lambda, size = 1/psi_Y,
                   log = TRUE)
   if(return_contributions) return(llik) else return(sum(llik[-(1:max_lag)]))
   return(llik)
@@ -243,21 +243,21 @@ llik_cov_r_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag = 5){
   # get corresponding parameters for unthinned process:
   pars_star <- reparam_cov_cpp(m1 = m1, vl1 = vl1, nu = nu, phi = phi,
                              kappa = kappa, psi = psi, q = q)
-  m1_star <- pars_star$m1
-  vl1_star <- pars_star$vl1
-  nu_star <- pars_star$nu
-  phi_star <- pars_star$phi
-  kappa_star <- pars_star$kappa
-  psi_star <- pars_star$psi
+  m1_Y <- pars_star$m1
+  vl1_Y <- pars_star$vl1
+  nu_Y <- pars_star$nu
+  phi_Y <- pars_star$phi
+  kappa_Y <- pars_star$kappa
+  psi_Y <- pars_star$psi
 
-  nu_star_tilde <- nu_to_nu_tilde_cov_cpp(nu = nu_star, kappa = kappa_star)
+  nu_Y_star <- nu_to_nu_star_cov_cpp(nu = nu_Y, kappa = kappa_Y)
 
   # get weight matrix:
-  weight_matrix <- get_weight_matrix_cov_cpp(phi = phi_star, kappa = kappa_star, max_lag = max_lag)
+  weight_matrix <- get_weight_matrix_cov_cpp(phi = phi_Y, kappa = kappa_Y, max_lag = max_lag)
 
   # get likelihood:
-  lambda <- rep(nu_star_tilde, length.out = lgt) + rowSums(weight_matrix*mod_matr)
-  llik <- sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_star[-(1:max_lag)],
+  lambda <- rep(nu_Y_star, length.out = lgt) + rowSums(weight_matrix*mod_matr)
+  llik <- sum(dnbinom(Y[-(1:max_lag)], mu = lambda[-(1:max_lag)], size = 1/psi_Y[-(1:max_lag)],
                       log = TRUE))
   return(llik)
 }

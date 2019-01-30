@@ -34,14 +34,14 @@ List compute_sop_cov_cpp(double m1, double vl1, NumericVector nu,
   }
 
   // thinning:
-  NumericVector mu_Y = q*mu_X;
-  NumericVector v_Y = pow(q, 2)*v_X + q*(1 - q)*mu_X;
-  NumericVector cov1_Y = pow(q, 2)*cov1_X;
+  NumericVector mu_X_tilde = q*mu_X;
+  NumericVector v_X_tilde = pow(q, 2)*v_X + q*(1 - q)*mu_X;
+  NumericVector cov1_X_tilde = pow(q, 2)*cov1_X;
 
   return Rcpp::List::create(Rcpp::Named("mu_X") = mu_X, Rcpp::Named("v_X") = v_X,
                             Rcpp::Named("cov1_X") = cov1_X, Rcpp::Named("decay_cov_X") = phi + kappa,
-                            Rcpp::Named("mu_Y") = mu_Y, Rcpp::Named("v_Y") = v_Y,
-                            Rcpp::Named("cov1_Y") = cov1_Y, Rcpp::Named("decay_cov_Y") = phi + kappa);
+                            Rcpp::Named("mu_X_tilde") = mu_X_tilde, Rcpp::Named("v_X_tilde") = v_X_tilde,
+                            Rcpp::Named("cov1_X_tilde") = cov1_X_tilde, Rcpp::Named("decay_cov_X_tilde") = phi + kappa);
 }
 
 
@@ -53,43 +53,43 @@ List reparam_cov_cpp(double m1, double vl1, NumericVector nu, NumericVector phi,
   List target_sop = compute_sop_cov_cpp(m1, vl1, nu, phi, kappa, psi, q);
 
   // now find a completely observed process with the same properties:
-  NumericVector nu_star = q*nu; // known for theoretical reasons (?)
-  NumericVector phi_plus_kappa_star = phi + kappa; // this, too.
+  NumericVector nu_Y = q*nu; // known for theoretical reasons (?)
+  NumericVector phi_plus_kappa_Y = phi + kappa; // this, too.
 
   // extract:
-  NumericVector mu_X_star = target_sop("mu_Y");
-  NumericVector v_X_star = target_sop("v_Y"); // by definition
-  NumericVector cov1_X_star = target_sop("cov1_Y"); // by definition
+  NumericVector mu_Y = target_sop("mu_X_tilde");
+  NumericVector v_Y = target_sop("v_X_tilde"); // by definition
+  NumericVector cov1_Y = target_sop("cov1_X_tilde"); // by definition
 
   // initialize:
-  NumericVector phi_star(lgt);
-  NumericVector kappa_star(lgt);
-  NumericVector psi_star(lgt);
-  NumericVector v_lambda_star(lgt);
+  NumericVector phi_Y(lgt);
+  NumericVector kappa_Y(lgt);
+  NumericVector psi_Y(lgt);
+  NumericVector v_lambda_Y(lgt);
 
   // first elements are known:
-  v_lambda_star(0) = pow(q, 2)*vl1;
-  psi_star(0) = psi(0);
+  v_lambda_Y(0) = pow(q, 2)*vl1;
+  psi_Y(0) = psi(0);
 
   // element [1, 1] is correct by construction (thinning property of NB), the others can be adapted step by step.
   // done in loop:
   for(int i = 1; i < lgt; i++){
-    // fill in phi_star[i]
-    phi_star(i) = (cov1_X_star(i) - phi_plus_kappa_star(i)*v_lambda_star(i - 1) -
-      phi_plus_kappa_star(i)*pow(mu_X_star(i - 1),2) -
-      nu_star(i)*mu_X_star(i - 1) + mu_X_star(i)*mu_X_star(i - 1))/
-        (v_X_star(i - 1) - v_lambda_star(i - 1));
-    kappa_star(i) = phi_plus_kappa_star(i) - phi_star(i);
-    // update v_lambda_star:
-    v_lambda_star(i) = pow(phi_star(i), 2)*v_X_star(i - 1) +
-      (2*phi_star(i)*kappa_star(i) + pow(kappa_star(i), 2))*v_lambda_star(i - 1);
-    // now correct psi_star(i)
-    psi_star(i) = (v_X_star(i) - v_lambda_star(i) - mu_X_star(i))/
-      (pow(mu_X_star(i), 2) + v_lambda_star(i));
+    // fill in phi_Y[i]
+    phi_Y(i) = (cov1_Y(i) - phi_plus_kappa_Y(i)*v_lambda_Y(i - 1) -
+      phi_plus_kappa_Y(i)*pow(mu_Y(i - 1),2) -
+      nu_Y(i)*mu_Y(i - 1) + mu_Y(i)*mu_Y(i - 1))/
+        (v_Y(i - 1) - v_lambda_Y(i - 1));
+    kappa_Y(i) = phi_plus_kappa_Y(i) - phi_Y(i);
+    // update v_lambda_Y:
+    v_lambda_Y(i) = pow(phi_Y(i), 2)*v_Y(i - 1) +
+      (2*phi_Y(i)*kappa_Y(i) + pow(kappa_Y(i), 2))*v_lambda_Y(i - 1);
+    // now correct psi_Y(i)
+    psi_Y(i) = (v_Y(i) - v_lambda_Y(i) - mu_Y(i))/
+      (pow(mu_Y(i), 2) + v_lambda_Y(i));
   }
-  return Rcpp::List::create(Rcpp::Named("m1") = mu_X_star(0), Rcpp::Named("vl1") = v_lambda_star(0),
-                            Rcpp::Named("nu") = nu_star, Rcpp::Named("phi") = phi_star, Rcpp::Named("kappa") = kappa_star,
-                            Rcpp::Named("psi") = psi_star, Rcpp::Named("q") = 1);
+  return Rcpp::List::create(Rcpp::Named("m1") = mu_Y(0), Rcpp::Named("vl1") = v_lambda_Y(0),
+                            Rcpp::Named("nu") = nu_Y, Rcpp::Named("phi") = phi_Y, Rcpp::Named("kappa") = kappa_Y,
+                            Rcpp::Named("psi") = psi_Y, Rcpp::Named("q") = 1);
 }
 
 
@@ -113,7 +113,7 @@ NumericMatrix get_weight_matrix_cov_cpp(NumericVector phi, NumericVector kappa, 
 }
 
 // [[Rcpp::export]]
-NumericVector nu_to_nu_tilde_cov_cpp(NumericVector nu, NumericVector kappa){
+NumericVector nu_to_nu_star_cov_cpp(NumericVector nu, NumericVector kappa){
   return cond_mean_cov_cpp(nu(0), nu, NumericVector(nu.size()), kappa);
 }//!!! this does not use max_lag now; takes lags as far as it can get them (approximately); should be good enough.
 
@@ -140,20 +140,20 @@ double nllik_cov_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, N
   // get model matrix:
   NumericMatrix mod_matr = get_mod_matr_cov_cpp(Y, max_lag);
   // get corresponding parameters for unthinned process:
-  List pars_star = reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, q);
+  List pars_Y = reparam_cov_cpp(m1, vl1, nu, phi, kappa, psi, q);
   // extract:
-  double m1_star = pars_star("m1");
-  double vl1_star = pars_star("vl1");
-  NumericVector nu_star = pars_star("nu");
-  NumericVector phi_star = pars_star("phi");
-  NumericVector kappa_star = pars_star("kappa");
-  NumericVector psi_star = pars_star("psi");
+  double m1_Y = pars_Y("m1");
+  double vl1_Y = pars_Y("vl1");
+  NumericVector nu_Y = pars_Y("nu");
+  NumericVector phi_Y = pars_Y("phi");
+  NumericVector kappa_Y = pars_Y("kappa");
+  NumericVector psi_Y = pars_Y("psi");
 
   // get nu_tilde, i.e. nu for geometric lag formulation
-  NumericVector nu_star_tilde  = nu_to_nu_tilde_cov_cpp(nu_star, kappa_star);
+  NumericVector nu_Y_star  = nu_to_nu_star_cov_cpp(nu_Y, kappa_Y);
 
   // get weight matrix for lags:
-  NumericMatrix weight_matrix = get_weight_matrix_cov_cpp(phi_star, kappa_star, max_lag);
+  NumericMatrix weight_matrix = get_weight_matrix_cov_cpp(phi_Y, kappa_Y, max_lag);
 
   // get conditional means:
   NumericVector lambda(lgt);
@@ -162,8 +162,8 @@ double nllik_cov_cpp(NumericVector Y, double m1, double vl1, NumericVector nu, N
     nlliks(i) = 0;
   }
   for(int i = max_lag; i < lgt; i++){
-    lambda(i) = nu_star_tilde(i) + sum(weight_matrix(i,_)*mod_matr(i,_));
-    nlliks(i) = -1*dnbinom_mu(Y(i), 1/psi_star(i), lambda(i), true);
+    lambda(i) = nu_Y_star(i) + sum(weight_matrix(i,_)*mod_matr(i,_));
+    nlliks(i) = -1*dnbinom_mu(Y(i), 1/psi_Y(i), lambda(i), true);
    }
 
   return sum(nlliks);
