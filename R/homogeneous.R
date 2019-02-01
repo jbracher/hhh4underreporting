@@ -132,19 +132,23 @@ fit_hhh4u <- function(observed, q, include_kappa = TRUE,
   }
 
   # prepare return object:
-  Sigma <- solve(opt$hessian)
   ret <- list()
   ret$par <- exp(opt$par)
   names(ret$par) <- c("nu", "phi", "kappa", "psi")
 
-  ret$se <- if(hessian) sqrt(diag(Sigma)*exp(opt$par)^2) else NULL
+
   if(hessian){
+    Sigma <- solve(opt$hessian)
+    ret$Sigma_log <- Sigma
+    ret$se <- if(hessian) sqrt(diag(Sigma)*exp(opt$par)^2) else NULL
     names(ret$se) <- c("nu", "phi", "kappa", "psi")
+  }else{
+    ret$se <- NULL
+    ret$Sigma <- NULL
   }
 
   ret$par_log <- opt$par
   ret$se_log <- if(hessian) diag(Sigma) else NULL
-  ret$Sigma_log <- if(hessian) Sigma else NULL
   ret$opt <- opt
   ret$observed <- observed
   ret$q <- q
