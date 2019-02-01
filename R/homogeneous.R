@@ -68,7 +68,7 @@ recover_pars <- function(mu, sigma2, g, h, q = 1, sop_list = NULL){
     (pars$phi^2*(sigma2 - (1 - q)*mu) + mu^2*(1 - h^2 + pars$phi^2))
   pars$q <- q
 
-  if(any(pars < 0)) stop("Parameter recovery not successful -- at least one parameter is negative.")
+  if(any(pars < 0)) print(pars)# stop("Parameter recovery not successful -- at least one parameter is negative.")
 
   return(pars)
 }
@@ -135,7 +135,7 @@ fit_hhh4u <- function(observed, q, include_kappa = TRUE,
   Sigma <- solve(opt$hessian)
   ret <- list()
   ret$par <- exp(opt$par)
-  ret$se <- if(hessian) sqrt(diag(Sigma)*exp(fit$par)^2) else NULL
+  ret$se <- if(hessian) sqrt(diag(Sigma)*exp(opt$par)^2) else NULL
   names(ret$par) <- names(ret$sd) <- c("nu", "phi", "kappa", "psi")
 
   ret$par_log <- opt$par
