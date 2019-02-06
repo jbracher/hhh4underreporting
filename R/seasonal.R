@@ -313,25 +313,28 @@ nllik_seas <- function(observed, alpha_nu, gamma_nu, delta_nu,
 #' Simulate from a seasonal endemic-epidemic model with underreporting. Includes a burn-in period
 #' to reach stationary phase.
 #'
-#' @param nu,phi,kappa,psi the model parameters (vectors of equal length representing one period)
+#' @param alpha_nu,gamma_nu,delta_nu,alpha_phi,gamma_phi,delta_phi,kappa,psi the model parameters
 #' @param q the reporting probability
+#' @param L the length of one cycle (integer)
 #' @param n_seas the number of seasons to simulate (integer)
-#' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period)
+#' @param start initial value of both $X$ and $lambda$ (at beginning of burn in period; can usually be ignored)
 #' @param burn_in number of seasons to discard to reach stationary phase
 #' @return A named list with elements \code{"X"} and \code{"Y"} containing the unthinned and thinned simulated time series.
 #' @export
-simulate_hhh4u_seasonal <- function(nu, phi, kappa, psi, q = 1, n_seas = 10,
+simulate_hhh4u_seasonal <- function(alpha_nu, gamma_nu, delta_nu,
+                                    alpha_phi, gamma_phi, delta_phi,
+                                    kappa, psi, q = 1, L = 52, n_seas = 10,
                              start = 10, burn_in = 10){
-  L <- length(nu)
-  lgt <- L*(n_seas + burn_in)
 
-  if(length(nu) != length(phi) |
-     length(nu) != length(psi) |
-     length(nu) != length(kappa)){
-    stop("nu and lambda, kappa and psi need to have the same length.")
-  }
+  lgt <- n_seas*L
+  lgt_total <- lgt + burn_in*L
 
-  L <- length(nu)
+  sin_t <- sin(2*pi*1:lgt/L)
+  cos_t <- cos(2*pi*1:lgt/L)
+
+  nu <- exp(alpha_nu + gamma_nu*sin_t + delta_nu*cos_t)
+  phi <- exp(alpha_phi + gamma_phi*sin_t + delta_phi*cos_t)
+
   lambda <- X <- rep(NA, lgt)
   lambda[1] <- X[1] <- start
   for(i in 2:lgt){
@@ -340,12 +343,12 @@ simulate_hhh4u_seasonal <- function(nu, phi, kappa, psi, q = 1, n_seas = 10,
     }else{
       i%%L
     }
-    lambda[i] <- nu[ind] + phi[ind]*X[i - 1] + kappa[ind]*lambda[i - 1]
-    X[i] <- rnbinom(1, mu = lambda[i], size = 1/psi[ind])
+    lambda[i] <- nu[ind] + phi[ind]*X[i - 1] + kappa*lambda[i - 1]
+    X[i] <- rnbinom(1, mu = lambda[i], size = 1/psi)
   }
-  X <- tail(X, lgt - burn_in*L)
-  lambda <- tail(lambda, lgt - burn_in*L)
-  X_tilde <- rbinom(lgt - burn_in*L, X, q)
+  X <- tail(X, lgt)
+  lambda <- tail(lambda, lgt)
+  X_tilde <- rbinom(lgt, X, q)
   list(X = X, lambda = lambda, X_tilde = X_tilde)
 }
 
