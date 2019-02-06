@@ -15,7 +15,10 @@
 #' @export
 simulate_hhh4u <- function(nu, phi, kappa, psi, q = 1, lgt = 100,
                              start = 10, burn_in = 1000){
-  simulate_hhh4u_seasonal(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q,
+  simulate_hhh4u_seasonal(alpha_nu = log(nu), alpha_phi = log(phi),
+                          gamma_nu = 0, delta_nu = 0,
+                          gamma_phi = 0, delta_phi = 0,
+                          kappa = kappa, psi = psi, q = q,
                    n_seas = lgt, start = start, burn_in = burn_in)
 }
 
@@ -68,7 +71,7 @@ recover_pars <- function(mu, sigma2, g, h, q = 1, sop_list = NULL){
     (pars$phi^2*(sigma2 - (1 - q)*mu) + mu^2*(1 - h^2 + pars$phi^2))
   pars$q <- q
 
-  if(any(pars < 0)) print(pars)# stop("Parameter recovery not successful -- at least one parameter is negative.")
+  # if(any(pars < 0)) print(pars)# stop("Parameter recovery not successful -- at least one parameter is negative.")
 
   return(pars)
 }
