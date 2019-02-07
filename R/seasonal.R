@@ -90,8 +90,8 @@ compute_sop_seas <- function(nu, phi, kappa, psi, q){
   cov1_X_tilde <- q^2*cov1_X
   decay_X_tilde <- decay_X
 
-  return(list(mu_X = mu_X, sigma2_X = sigma2_X,
-              cov1_X = cov1_X, v_X = sigma2_X, decay_cov_X = decay_X,
+  return(list(mu_X = mu_X, v_X = sigma2_X,
+              cov1_X = cov1_X, decay_cov_X = decay_X,
               mu_X_tilde = mu_X_tilde, v_X_tilde = sigma2_X_tilde,
               cov1_X_tilde = cov1_X_tilde, decay_cov_X_tilde = decay_X_tilde))
 }
