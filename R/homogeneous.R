@@ -13,18 +13,18 @@
 #' @examples
 #' sim <- simulate_hhh4u(nu = 3, phi = 0.4, kappa = 0.2, psi = 0.1, q = 0.5, lgt = 100)
 #' @export
-simulate_hhh4u <- function(nu, phi, kappa, psi, q = 1, lgt = 100,
+simulate_hhh4u_homog <- function(nu, phi, kappa, psi, q = 1, lgt = 100,
                              start = 10, burn_in = 1000){
   simulate_hhh4u_seasonal(alpha_nu = log(nu), alpha_phi = log(phi),
                           gamma_nu = 0, delta_nu = 0,
                           gamma_phi = 0, delta_phi = 0,
-                          kappa = kappa, psi = psi, q = q,
+                          kappa = kappa, psi = psi, q = q, L = 1,
                    n_seas = lgt, start = start, burn_in = burn_in)
 }
 
 # function to compute second-order properties (of both the latent and the
 # observed process). The ACF is given by rho(d) = gh^(d - 1)
-compute_sop <- function(nu, phi, kappa, psi, q, par_list = NULL){
+compute_sop_homog <- function(nu, phi, kappa, psi, q, par_list = NULL){
   # extract parameters if provided in list form
   if(!is.null(par_list)){
     nu <- par_list$nu; phi <- par_list$phi; kappa <- par_list$kappa
@@ -54,7 +54,7 @@ compute_sop <- function(nu, phi, kappa, psi, q, par_list = NULL){
 
 # function to recover nu, phi, kappa, psi from the second-order
 # properties for a given q:
-recover_pars <- function(mu, sigma2, g, h, q = 1, sop_list = NULL){
+recover_pars_homog <- function(mu, sigma2, g, h, q = 1, sop_list = NULL){
   # extract second-order properties if provided as list:
   if(!is.null(sop_list)){
     mu <- sop_list$mu; sigma2 <- sop_list$sigma2; g <- sop_list$g; h <- sop_list$h
@@ -77,11 +77,11 @@ recover_pars <- function(mu, sigma2, g, h, q = 1, sop_list = NULL){
 }
 
 # re-parameterize (approximate) a model to a fully observed process
-reparam <- function(nu, phi, kappa, psi, q){
+reparam_homog <- function(nu, phi, kappa, psi, q){
   # get second-order properties
-  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$X_tilde
+  sop <- compute_sop_homog(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$X_tilde
   # recover parameters for q = 1
-  recover_pars(sop_list = sop, q = 1)
+  recover_pars_homog(sop_list = sop, q = 1)
 }
 
 #' Fitting time-homogeneous underreported endemic-epidemic model using maximum likelihood
@@ -105,10 +105,10 @@ reparam <- function(nu, phi, kappa, psi, q){
 #'   associated standard errors (\code{se_log}) and inverse Fisher information matrix (\code{Sigma_log})
 #'   \item the return object of the call to \code{optim} (\code{opt})
 #'   \item the data (\code{observed}), reporting probability (\code{q}) and other settings \code{settings}
-#'   used in the call to \code{fit_hhh4u}
+#'   used in the call to \code{fit_hhh4u_homog}
 #' }
 #' @export
-fit_hhh4u <- function(observed, q, include_kappa = TRUE,
+fit_hhh4u_homog <- function(observed, q, include_kappa = TRUE,
                     initial = c(log_nu = 2, log_phi = -1, log_kappa = -2, log_psi = -3),
                     max_lag = 5, iter_optim = 3, hessian = TRUE, ...){
 
@@ -117,14 +117,14 @@ fit_hhh4u <- function(observed, q, include_kappa = TRUE,
     initial <- initial[names(initial) != "alpha_kappa"]
   }
 
-  # wrapper around nllik to be passed to optim:
+  # wrapper around nllik_homog to be passed to optim:
   nllik_vect <- function(pars){
     # extract parameter values:
     nu <- exp(pars["log_nu"])
     phi <- exp(pars["log_phi"])
     kappa <- ifelse(include_kappa, exp(pars["log_kappa"]), -10)
     psi <- exp(pars["log_psi"])
-    nllik(observed = observed, nu = nu, phi = phi, kappa = kappa, psi = psi, q = q, max_lag = max_lag)
+    nllik_homog(observed = observed, nu = nu, phi = phi, kappa = kappa, psi = psi, q = q, max_lag = max_lag)
   }
 
   # optimization:
@@ -173,15 +173,15 @@ fit_hhh4u <- function(observed, q, include_kappa = TRUE,
 #' returned (as vector)?
 #' @return The log-likelihood as scalar or (if \code{return_contributions == TRUE}) the vector of
 #' log-likelihood contributions.
-nllik <- function(observed, nu, phi, kappa, psi, q, max_lag = 5, return_contributions = FALSE){
+nllik_homog <- function(observed, nu, phi, kappa, psi, q, max_lag = 5, return_contributions = FALSE){
   # get second order properties:
-  sop <- compute_sop(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$X_tilde
+  sop <- compute_sop_homog(nu = nu, phi = phi, kappa = kappa, psi = psi, q = q)$X_tilde
 
   # return -Inf if non-statinary:
   if(any(unlist(sop) < 0)) return(-Inf)
 
   # get corresponding parameters for unthinned process:
-  pars_Y <- recover_pars(q = 1, sop_list = sop)
+  pars_Y <- recover_pars_homog(q = 1, sop_list = sop)
   nu_Y <- pars_Y$nu
   phi_Y <- pars_Y$phi
   kappa_Y <- pars_Y$kappa
@@ -202,7 +202,7 @@ nllik <- function(observed, nu, phi, kappa, psi, q, max_lag = 5, return_contribu
 }
 
 # helper function to obtain second-order properties of simulated time series
-emp_sop <- function(observed){
+emp_sop_homog <- function(observed){
   lgt <- length(observed)
   list(
     mean = mean(observed),
