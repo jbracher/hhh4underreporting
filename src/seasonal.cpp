@@ -111,7 +111,7 @@ NumericVector nu_to_nu_star_seas_cpp(NumericVector nu, NumericVector kappa, int 
 }
 
 // [[Rcpp::export]]
-List compute_sop_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p){
+List compute_sop_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q){
   int L = nu.size();
   NumericVector mu_X = stat_mean_seas_cpp(nu, phi, kappa);
   NumericVector sigma2_X = stat_var_seas_cpp(nu, phi, kappa, psi)(1);
@@ -126,9 +126,9 @@ List compute_sop_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kap
   }
   NumericVector decay_X = phi + kappa;
 
-  NumericVector mu_X_tilde = p*mu_X;
-  NumericVector sigma2_X_tilde = pow(p, 2)*sigma2_X + p*(1 - p)*mu_X;
-  NumericVector cov1_X_tilde = pow(p, 2)*cov1_X;
+  NumericVector mu_X_tilde = q*mu_X;
+  NumericVector sigma2_X_tilde = pow(q, 2)*sigma2_X + q*(1 - q)*mu_X;
+  NumericVector cov1_X_tilde = pow(q, 2)*cov1_X;
   NumericVector decay_X_tilde = decay_X;
 
   return Rcpp::List::create(Rcpp::Named("mu_X_tilde") = mu_X_tilde,

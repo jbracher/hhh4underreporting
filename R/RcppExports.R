@@ -49,8 +49,8 @@ nu_to_nu_star_seas_cpp <- function(nu, kappa, max_lag) {
     .Call('_hhh4underreporting_nu_to_nu_star_seas_cpp', PACKAGE = 'hhh4underreporting', nu, kappa, max_lag)
 }
 
-compute_sop_seas_cpp <- function(nu, phi, kappa, psi, p) {
-    .Call('_hhh4underreporting_compute_sop_seas_cpp', PACKAGE = 'hhh4underreporting', nu, phi, kappa, psi, p)
+compute_sop_seas_cpp <- function(nu, phi, kappa, psi, q) {
+    .Call('_hhh4underreporting_compute_sop_seas_cpp', PACKAGE = 'hhh4underreporting', nu, phi, kappa, psi, q)
 }
 
 reparam_seas_cpp <- function(nu, phi, kappa, psi, q) {

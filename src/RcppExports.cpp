@@ -173,8 +173,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_sop_seas_cpp
-List compute_sop_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double p);
-RcppExport SEXP _hhh4underreporting_compute_sop_seas_cpp(SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP pSEXP) {
+List compute_sop_seas_cpp(NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q);
+RcppExport SEXP _hhh4underreporting_compute_sop_seas_cpp(SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -182,8 +182,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_sop_seas_cpp(nu, phi, kappa, psi, p));
+    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_sop_seas_cpp(nu, phi, kappa, psi, q));
     return rcpp_result_gen;
 END_RCPP
 }
