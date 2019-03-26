@@ -21,6 +21,18 @@ nllik_cov_cpp <- function(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag = 5L) {
     .Call('_hhh4underreporting_nllik_cov_cpp', PACKAGE = 'hhh4underreporting', Y, m1, vl1, nu, phi, kappa, psi, q, max_lag)
 }
 
+compute_sop_tv_cpp <- function(lambda1, nu, phi, kappa, psi, q) {
+    .Call('_hhh4underreporting_compute_sop_tv_cpp', PACKAGE = 'hhh4underreporting', lambda1, nu, phi, kappa, psi, q)
+}
+
+reparam_tv_cpp <- function(lambda1, nu, phi, kappa, psi, q) {
+    .Call('_hhh4underreporting_reparam_tv_cpp', PACKAGE = 'hhh4underreporting', lambda1, nu, phi, kappa, psi, q)
+}
+
+nllik_tv_cpp <- function(observed, lambda1, nu, phi, kappa, psi, q) {
+    .Call('_hhh4underreporting_nllik_tv_cpp', PACKAGE = 'hhh4underreporting', observed, lambda1, nu, phi, kappa, psi, q)
+}
+
 back_seas_cpp <- function(vect, to, lgt) {
     .Call('_hhh4underreporting_back_seas_cpp', PACKAGE = 'hhh4underreporting', vect, to, lgt)
 }
