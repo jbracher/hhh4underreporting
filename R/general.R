@@ -14,13 +14,12 @@
 #' @export
 simulate_hhh4u <- function(lambda1, nu, phi, kappa, psi, q = 1,
                            return_sts = TRUE, args_sts = list()){
-  lgt = max(as.numeric(lapply(list(nu, phi, kappa, psi), length)))
+  lgt = length(nu)
 
-  if(!length(nu) %in% c(1, lgt) |
-     !length(phi) %in% c(1, lgt) |
+  if(!length(phi) %in% c(1, lgt) |
      !length(kappa) %in% c(1, lgt) |
      !length(psi) %in% c(1, lgt)){
-    stop("Parameter vectors nu, phi, kappa, psi all need to have the same length. Scalar parameters are recycled.")
+    stop("Parameter vectors nu, phi, kappa, psi all need to have the same length. Alternatively phi, kappa and psi can also be scalar (will be recycled).")
   }
 
   if(length(q) != 1) stop("Reporting probability q needs to be time-constant (just one scalar).")
@@ -344,8 +343,8 @@ hhh4u_R <- function(stsObj,
   ret$coefficients <- opt$par
   ret$se <- ret$cov <- NULL
   if(control$return_se){
-    ret$cov <- opt$hessian
-    ret$se <- diag(opt$hessian)
+    ret$cov <- solve(opt$hessian)
+    ret$se <- diag(ret$cov)
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
                        kappa = kappa, psi = psi, q = q)
@@ -477,8 +476,8 @@ hhh4u <- function(stsObj,
   ret$q <- control$q
   ret$se <- ret$cov <- NULL
   if(control$return_se){
-    ret$cov <- opt$hessian
-    ret$se <- diag(opt$hessian)
+    ret$cov <- solve(opt$hessian)
+    ret$se <- diag(ret$cov)
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
                        kappa = kappa, psi = psi, q = q)
