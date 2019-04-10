@@ -139,7 +139,7 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
     diag(cov_X) <- v_X
     # the first off-diagonal is tricky:
     for(i in 1:(lgt - 1)){
-      cov_X[i, i + 1] <- kappa[i + 1]*v_lambda[i] +
+      cov_X[i, i + 1] <- cov_X[i + 1, i] <- kappa[i + 1]*v_lambda[i] +
         phi[i + 1]*v_X[i] +
         (phi[i + 1] + kappa[i + 1])*mu_X[i]^2 +
         nu[i + 1]*mu_X[i] -
