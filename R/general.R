@@ -148,7 +148,7 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
     # the others are simple
     for(ro in 1:(lgt - 2)){ # loop over rows
       for(co in (ro + 2):lgt){
-        cov_X[ro, co] <- cov_X[ro, co] <- (phi[co] + kappa[co])*cov_X[ro, co - 1]
+        cov_X[ro, co] <- cov_X[co, ro] <- (phi[co] + kappa[co])*cov_X[ro, co - 1]
       }
     }
     cov_X_tilde <- q^2*cov_X + q*(1 - q)*diag(mu_X)
