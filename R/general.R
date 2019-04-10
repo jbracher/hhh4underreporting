@@ -148,7 +148,7 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
     # the others are simple
     for(ro in 1:(lgt - 2)){ # loop over rows
       for(co in (ro + 2):lgt){
-        cov_X[ro, co] <- (phi[co] + kappa[co])*cov_X[ro, co - 1]
+        cov_X[ro, co] <- cov_X[ro, co] <- (phi[co] + kappa[co])*cov_X[ro, co - 1]
       }
     }
     cov_X_tilde <- q^2*cov_X + q*(1 - q)*diag(mu_X)
@@ -344,7 +344,7 @@ hhh4u_R <- function(stsObj,
   ret$se <- ret$cov <- NULL
   if(control$return_se){
     ret$cov <- solve(opt$hessian)
-    ret$se <- diag(ret$cov)
+    ret$se <- sqrt(diag(ret$cov))
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
                        kappa = kappa, psi = psi, q = q)
@@ -477,7 +477,7 @@ hhh4u <- function(stsObj,
   ret$se <- ret$cov <- NULL
   if(control$return_se){
     ret$cov <- solve(opt$hessian)
-    ret$se <- diag(ret$cov)
+    ret$se <- sqrt(diag(ret$cov))
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
                        kappa = kappa, psi = psi, q = q)
@@ -490,7 +490,7 @@ hhh4u <- function(stsObj,
                         length.out = nrow(stsObj@observed), by = 1/stsObj@freq)[control$subset]
 
   # other:
-  ret$dim <- length(ret$par)
+  ret$dim <- length(ret$coefficients)
   ret$loglikelihood <- -opt$value
   ret$convergence <- (opt$convergence == 0)
   ret$control <- control
