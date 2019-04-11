@@ -20,8 +20,9 @@ simulate_hhh4u <- function(lambda1, nu, phi, kappa, psi, q = 1,
   if(!length(nu) %in% c(1, lgt) |
      !length(phi) %in% c(1, lgt) |
      !length(kappa) %in% c(1, lgt) |
-     !length(psi) %in% c(1, lgt)){
-    stop("Parameter vectors nu, phi, kappa, psi, q all need to have the length lgt or 1 (will be recycled).")
+     !length(psi) %in% c(1, lgt) |
+     !length(q) %in% c(1, lgt)){
+    stop("Parameter vectors nu, phi, kappa, psi, q all need to have length lgt or 1 (will then be recycled).")
   }
 
   if(length(nu) == 1) nu <- rep(nu, lgt)
@@ -88,7 +89,7 @@ simulate_hhh4u2 <- function(lambda1, beta_nu, beta_phi, kappa, psi, q = 1, lgt,
 #' @param lambda1 the initial value of lambda
 #' @param nu,phi,kappa the time-varying parameters of the model (\code{kappa} is also allowed to be time-varying here);
 #' vectors of equal length
-#' @param q the reporting probability; defaults to 1.
+#' @param q the potentially time-varying reporting probability; defaults to 1.
 #' @return a vector containing the marginal means
 marg_mean_tv <- function(lambda1, nu, phi, kappa, q = 1){
   lgt <- length(nu)
@@ -117,7 +118,7 @@ marg_mean_tv <- function(lambda1, nu, phi, kappa, q = 1){
 compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALSE){
   lgt <- length(nu)
   # get means:
-  mu_X <- marg_mean_tv(lambda1 = lambda1, nu = nu,  phi = phi, kappa = kappa)
+  mu_X <- hhh4underreporting:::marg_mean_tv(lambda1 = lambda1, nu = nu,  phi = phi, kappa = kappa)
   # compute variances of lambda as they will be required:
   v_lambda <- v_X <- cov1_X <- numeric(lgt)
   v_lambda[1] <- 0
@@ -152,7 +153,7 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
         cov_X[ro, co] <- cov_X[co, ro] <- (phi[co] + kappa[co])*cov_X[ro, co - 1]
       }
     }
-    cov_X_tilde <- q^2*cov_X + q*(1 - q)*diag(mu_X)
+    cov_X_tilde <- q%*%t(q)*cov_X + q*(1 - q)*diag(mu_X)
   }else{
     cov_X <- cov_X_tilde <- NULL
   }
@@ -160,12 +161,13 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
   # thinning:
   mu_X_tilde <- q*mu_X
   v_X_tilde <- q^2*v_X + q*(1 - q)*mu_X
-  cov1_X_tilde <- q^2*cov1_X
+  cov1_X_tilde <- q*c(NA, q[-lgt])*cov1_X
 
   return(list(mu_X = mu_X, v_X = v_X, cov1_X = cov1_X,
               decay_cov_X = phi + kappa,  cov_X = cov_X, v_lambda = v_lambda,
               mu_X_tilde = mu_X_tilde, v_X_tilde = v_X_tilde, cov1_X_tilde = cov1_X_tilde,
-              decay_cov_X_tilde = phi + kappa, cov_X_tilde = cov_X_tilde))
+              decay_cov_X_tilde = (phi + kappa)*q/(c(NA, q[-lgt])),
+              cov_X_tilde = cov_X_tilde))
 }
 
 #' Approximate an underreported model by a fully observed one
