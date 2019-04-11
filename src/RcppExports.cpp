@@ -84,7 +84,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_sop_tv_cpp
-List compute_sop_tv_cpp(double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q);
+List compute_sop_tv_cpp(double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, NumericVector q);
 RcppExport SEXP _hhh4underreporting_compute_sop_tv_cpp(SEXP lambda1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -94,13 +94,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
     rcpp_result_gen = Rcpp::wrap(compute_sop_tv_cpp(lambda1, nu, phi, kappa, psi, q));
     return rcpp_result_gen;
 END_RCPP
 }
 // reparam_tv_cpp
-List reparam_tv_cpp(double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q);
+List reparam_tv_cpp(double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, NumericVector q);
 RcppExport SEXP _hhh4underreporting_reparam_tv_cpp(SEXP lambda1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -110,13 +110,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
     rcpp_result_gen = Rcpp::wrap(reparam_tv_cpp(lambda1, nu, phi, kappa, psi, q));
     return rcpp_result_gen;
 END_RCPP
 }
 // nllik_tv_cpp
-double nllik_tv_cpp(NumericVector observed, double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, double q);
+double nllik_tv_cpp(NumericVector observed, double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, NumericVector q);
 RcppExport SEXP _hhh4underreporting_nllik_tv_cpp(SEXP observedSEXP, SEXP lambda1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -127,7 +127,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< double >::type q(qSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
     rcpp_result_gen = Rcpp::wrap(nllik_tv_cpp(observed, lambda1, nu, phi, kappa, psi, q));
     return rcpp_result_gen;
 END_RCPP
