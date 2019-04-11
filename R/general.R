@@ -182,9 +182,9 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
 reparam_tv <- function(lambda1, nu, phi, kappa, psi, q){
   lgt <- length(nu)
   # compute target second-order properties:
-  target_sop <- compute_sop_tv2(lambda1 = lambda1, nu = nu,
-                                phi = phi, kappa = kappa,
-                                psi = psi, q = q)
+  target_sop <- compute_sop_tv(lambda1 = lambda1, nu = nu,
+                               phi = phi, kappa = kappa,
+                               psi = psi, q = q)
 
   # now find a completely observed process with the same properties:
   nu_Y <- q*nu # known for theoretical reasons
@@ -253,7 +253,7 @@ compute_fitted_values_tv <- function(observed, lambda1_Y, nu_Y, phi_Y, kappa_Y){
 #' @param nu,phi,kappa,psi the time-varying parameters of the model
 #'  (\code{kappa} is also allowed to be time-varying here);
 #' vectors of equal length
-#' @param q the assumed reporting probability
+#' @param q the assumed reporting probability (potentially time-varying)
 #' @param return_contributions logical: should the likelihood contributions
 #' of the different weeks be returned?
 #' @param log logical: return log-likelihood?
@@ -293,6 +293,12 @@ hhh4u_R <- function(stsObj,
 
   control <- setControl(control = control, stsObj = stsObj)
   observed <- stsObj@observed[control$subset]
+  if(!length(control$q) %in% c(1, nrow(stsObj@observed))){
+    stop("q needs to be either scalar or a vector of the same length as stsObj@observed")
+  }
+  if(any(control$q <= 0 | control$q > 1)){
+    stop("control$q needs to be from the interval (0, 1].")
+  }
 
   nllik_vect <- function(pars){
     lgt <- length(observed)
@@ -310,6 +316,7 @@ hhh4u_R <- function(stsObj,
       rep(0.0001, lgt)
     }
     q <- control$q
+    if(length(q) == 1) q <- rep(q, lgt)
 
     -llik_tv(observed = observed, lambda1 = lambda1, nu = nu,
              phi = phi, kappa = kappa, psi = psi,
@@ -464,6 +471,7 @@ hhh4u <- function(stsObj,
   kappa <- rep(exp(opt$par["log_kappa"]), length(observed))
   psi <- rep(exp(opt$par["log_psi"]), length(observed))
   q <- control$q
+
   # get corresponding parameters for unthinned process:
   pars_Y <- reparam_tv(lambda1 = lambda1, nu = nu, phi = phi,
                        kappa = kappa, psi = psi, q = q)
@@ -534,6 +542,9 @@ setControl <- function(control, stsObj){
   }
   if(is.null(control$q)){
     stop("A value for q needs to be provided in the control argument.")
+  }
+  if(length(control$q) == 1){
+    control$q <- rep(control$q, nTime)
   }
   if(!inherits(control$end$f, "formula")){
     stop("'control$end$f' must be a formula")
