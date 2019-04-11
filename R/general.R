@@ -5,29 +5,30 @@
 #'
 #' @param lambda1 the initial value of lambda
 #' @param nu,phi,kappa,psi the model parameters (vectors of equal length
-#' corresponding to the length of the time series; scalars are recycled.)
-#' @param q the reporting probability
+#' corresponding to the length of the time series; scalars are recycled).
+#' @param q the reporting probability; either a scalar or a vector of length lgt
+#' @param lgt = leng
 #' @return A named list with elements \code{"X"}, \code{"X_tilde"} and \code{"lambda"} containing
 #' the unthinned and thinned simulated time series as well as the conditional mean process.
 #' @examples
 #' sim <- simulate_hhh4u(lambda1 = 1, nu = c(1:5, 4:1), phi = 0.4, kappa = 0.2, psi = 0.1, q = 0.5)
 #' @export
 simulate_hhh4u <- function(lambda1, nu, phi, kappa, psi, q = 1,
+                           lgt = max(sapply(list(nu, phi, kappa, psi, q), length)),
                            return_sts = TRUE, args_sts = list()){
-  lgt = length(nu)
 
-  if(!length(phi) %in% c(1, lgt) |
+  if(!length(nu) %in% c(1, lgt) |
+     !length(phi) %in% c(1, lgt) |
      !length(kappa) %in% c(1, lgt) |
      !length(psi) %in% c(1, lgt)){
-    stop("Parameter vectors nu, phi, kappa, psi all need to have the same length. Alternatively phi, kappa and psi can also be scalar (will be recycled).")
+    stop("Parameter vectors nu, phi, kappa, psi, q all need to have the length lgt or 1 (will be recycled).")
   }
-
-  if(length(q) != 1) stop("Reporting probability q needs to be time-constant (just one scalar).")
 
   if(length(nu) == 1) nu <- rep(nu, lgt)
   if(length(phi) == 1) phi <- rep(phi, lgt)
   if(length(kappa) == 1) kappa <- rep(kappa, lgt)
   if(length(psi) == 1) psi <- rep(psi, lgt)
+  if(length(q) == 1) psi <- rep(q, lgt)
 
   lambda <- X <- Y <- numeric(lgt)
   lambda[1] <- lambda1
@@ -617,7 +618,7 @@ plot.hhh4u <- function(fit, type  = c("fitted"), ...){
 #' @export
 summary.hhh4u <- function(fit){
   ret <- fit[c("call", "convergence", "dim", "loglikelihood",
-                    "nTime", "coefficients", "se")]
+               "nTime", "coefficients", "se")]
   class(ret) <- "summary.hhh4u"
   return(ret)
 }
