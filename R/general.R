@@ -182,13 +182,13 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
 reparam_tv <- function(lambda1, nu, phi, kappa, psi, q){
   lgt <- length(nu)
   # compute target second-order properties:
-  target_sop <- compute_sop_tv(lambda1 = lambda1, nu = nu,
-                               phi = phi, kappa = kappa,
-                               psi = psi, q = q)
+  target_sop <- compute_sop_tv2(lambda1 = lambda1, nu = nu,
+                                phi = phi, kappa = kappa,
+                                psi = psi, q = q)
 
   # now find a completely observed process with the same properties:
-  nu_Y <- q*nu # known for theoretical reasons (?)
-  phi_plus_kappa_Y <- phi + kappa # this, too.
+  nu_Y <- q*nu # known for theoretical reasons
+  xi_Y <- target_sop$decay_cov_X_tilde
 
   mu_Y <- target_sop$mu_X_tilde
   phi_Y <- kappa_Y <- psi_Y <- v_lambda_Y <- numeric(lgt)
@@ -198,17 +198,17 @@ reparam_tv <- function(lambda1, nu, phi, kappa, psi, q){
 
   v_Y <- target_sop$v_X_tilde # by definition
   cov1_Y <- target_sop$cov1_X_tilde # by definition
-  phi_plus_kappa_Y <- target_sop$decay_cov_X_tilde
+  xi_Y <- target_sop$decay_cov_X_tilde
 
   # element [1, 1] is correct by construction (thinning property of NB), the others can be adapted step by step.
   # done in loop:
   for(i in 2:lgt){
     # correct phi_Y[i]
-    phi_Y[i] <- (cov1_Y[i] - phi_plus_kappa_Y[i]*v_lambda_Y[i - 1] -
-                   phi_plus_kappa_Y[i]*mu_Y[i - 1]^2 -
+    phi_Y[i] <- (cov1_Y[i] - xi_Y[i]*v_lambda_Y[i - 1] -
+                   xi_Y[i]*mu_Y[i - 1]^2 -
                    nu_Y[i]*mu_Y[i - 1] + mu_Y[i]*mu_Y[i - 1])/
       (v_Y[i - 1] - v_lambda_Y[i - 1])
-    kappa_Y[i] <- phi_plus_kappa_Y[i] - phi_Y[i]
+    kappa_Y[i] <- xi_Y[i] - phi_Y[i]
     # update v_lambda_Y:
     v_lambda_Y[i] <- phi_Y[i]^2*v_Y[i - 1] +
       (2*phi_Y[i]*kappa_Y[i] + kappa_Y[i]^2)*v_lambda_Y[i - 1]
@@ -218,7 +218,7 @@ reparam_tv <- function(lambda1, nu, phi, kappa, psi, q){
   }
 
   return(list(lambda1 = mu_Y[1], nu = nu_Y, phi = phi_Y, kappa = kappa_Y,
-              psi = psi_Y, q = 1))
+              psi = psi_Y, q = rep(1, lgt)))
 }
 
 #' Compute the fitted values of a fully observed process
