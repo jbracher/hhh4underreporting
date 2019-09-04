@@ -30,10 +30,10 @@ List compute_sop_tv_cpp(double lambda1, NumericVector nu,
     v_lambda(i) = pow(phi(i), 2)*v_X(i - 1) + (2*phi(i)*kappa(i) + pow(kappa(i), 2))*v_lambda(i - 1);
     v_X(i) = (1 + psi(i))*v_lambda(i) + mu_X(i) + psi(i)*pow(mu_X(i), 2);
     cov1_X(i) = kappa(i)*v_lambda(i - 1) +
-      phi(i)*v_X(i - 1) +
-      (phi(i) + kappa(i))*pow(mu_X(i - 1), 2) +
-      nu(i)*mu_X(i - 1) -
-      mu_X(i - 1)*mu_X(i);
+      phi(i)*v_X(i - 1);
+      // (phi(i) + kappa(i))*pow(mu_X(i - 1), 2) +
+      // nu(i)*mu_X(i - 1) -
+      // mu_X(i - 1)*mu_X(i); // superfluous, sum up to 0
     decay_cov_X(i) = phi(i) + kappa(i);
   }
 
