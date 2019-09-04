@@ -128,10 +128,10 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
     v_lambda[i] <- phi[i]^2*v_X[i - 1] + (2*phi[i]*kappa[i] + kappa[i]^2)*v_lambda[i - 1]
     v_X[i] <- (1 + psi[i])*v_lambda[i] + mu_X[i] + psi[i]*mu_X[i]^2
     cov1_X[i] <- kappa[i]*v_lambda[i - 1] +
-      phi[i]*v_X[i - 1] +
-      (phi[i] + kappa[i])*mu_X[i - 1]^2 +
-      nu[i]*mu_X[i - 1] -
-      mu_X[i - 1]*mu_X[i]
+      phi[i]*v_X[i - 1] # +
+      # (phi[i] + kappa[i])*mu_X[i - 1]^2 +
+      # nu[i]*mu_X[i - 1] -
+      # mu_X[i - 1]*mu_X[i] # these three lines are superfluous (add up to 0)
   }
 
   if(compute_Sigma){
@@ -293,8 +293,8 @@ hhh4u_R <- function(stsObj,
 
   control <- setControl(control = control, stsObj = stsObj)
   observed <- stsObj@observed[control$subset]
-  if(!length(control$q) %in% c(1, nrow(stsObj@observed))){
-    stop("q needs to be either scalar or a vector of the same length as stsObj@observed")
+  if(!length(control$q) %in% c(1, length(observed))){
+    stop("q needs to be either scalar or a vector of the same length as control$subset")
   }
   if(any(control$q <= 0 | control$q > 1)){
     stop("control$q needs to be from the interval (0, 1].")
@@ -432,6 +432,13 @@ hhh4u <- function(stsObj,
 
   control <- setControl(control = control, stsObj = stsObj)
   observed <- stsObj@observed[control$subset]
+
+  if(!length(control$q) %in% c(1, length(observed))){
+    stop("q needs to be either scalar or a vector of the same length as control$subset")
+  }
+  if(any(control$q <= 0 | control$q > 1)){
+    stop("control$q needs to be from the interval (0, 1].")
+  }
 
   nllik_vect <- function(pars){
     lgt <- length(observed)
