@@ -85,9 +85,7 @@ List reparam_tv_cpp(double lambda1, NumericVector nu, NumericVector phi, Numeric
   // done in loop:
   for(int i = 1; i < lgt; i++){
     // fill in phi_Y[i]
-    phi_Y(i) = (cov1_Y(i) - decay_cov_Y(i)*v_lambda_Y(i - 1) -
-      decay_cov_Y(i)*pow(mu_Y(i - 1),2) -
-      nu_Y(i)*mu_Y(i - 1) + mu_Y(i)*mu_Y(i - 1))/
+    phi_Y(i) = (cov1_Y(i) - decay_cov_Y(i)*v_lambda_Y(i - 1))/
         (v_Y(i - 1) - v_lambda_Y(i - 1));
     kappa_Y(i) = decay_cov_Y(i) - phi_Y(i);
     // update v_lambda_Y:

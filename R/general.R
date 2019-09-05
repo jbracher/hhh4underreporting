@@ -204,9 +204,7 @@ reparam_tv <- function(lambda1, nu, phi, kappa, psi, q){
   # done in loop:
   for(i in 2:lgt){
     # correct phi_Y[i]
-    phi_Y[i] <- (cov1_Y[i] - xi_Y[i]*v_lambda_Y[i - 1] -
-                   xi_Y[i]*mu_Y[i - 1]^2 -
-                   nu_Y[i]*mu_Y[i - 1] + mu_Y[i]*mu_Y[i - 1])/
+    phi_Y[i] <- (cov1_Y[i] - xi_Y[i]*v_lambda_Y[i - 1])/
       (v_Y[i - 1] - v_lambda_Y[i - 1])
     kappa_Y[i] <- xi_Y[i] - phi_Y[i]
     # update v_lambda_Y:
