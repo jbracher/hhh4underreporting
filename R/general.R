@@ -29,7 +29,7 @@ simulate_hhh4u <- function(lambda1, nu, phi, kappa, psi, q = 1,
   if(length(phi) == 1) phi <- rep(phi, lgt)
   if(length(kappa) == 1) kappa <- rep(kappa, lgt)
   if(length(psi) == 1) psi <- rep(psi, lgt)
-  if(length(q) == 1) psi <- rep(q, lgt)
+  if(length(q) == 1) q <- rep(q, lgt)
 
   lambda <- X <- Y <- numeric(lgt)
   lambda[1] <- lambda1
