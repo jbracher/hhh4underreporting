@@ -15,11 +15,20 @@
 #' @export
 simulate_hhh4u_homog <- function(nu, phi, kappa, psi, q = 1, lgt = 100,
                              start = 10, burn_in = 1000){
-  simulate_hhh4u_seasonal(alpha_nu = log(nu), alpha_phi = log(phi),
-                          gamma_nu = 0, delta_nu = 0,
-                          gamma_phi = 0, delta_phi = 0,
-                          kappa = kappa, psi = psi, q = q, L = 1,
-                   n_seas = lgt, start = start, burn_in = burn_in)
+
+  lgt_total <- lgt + burn_in
+  lambda <- X <- X_tilde <- numeric(lgt_total)
+  lambda[1] <- round(nu/(1 - phi - kappa))
+  X[1] <- rnbinom(1, mu = lambda[1], size = 1/psi)
+  for(i in 2:lgt_total){
+    lambda[i] <- nu + phi*X[i - 1] + kappa*lambda[i - 1]
+    X[i] <- rnbinom(1, mu = lambda[i], size = 1/psi)
+  }
+  X <- tail(X, lgt)
+  lambda <- tail(lambda, lgt)
+  X_tilde <- rbinom(lgt, X, q)
+  list(X = X, lambda = lambda, X_tilde = X_tilde)
+
 }
 
 # function to compute second-order properties (of both the latent and the

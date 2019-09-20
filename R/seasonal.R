@@ -335,9 +335,9 @@ simulate_hhh4u_seasonal <- function(alpha_nu, gamma_nu, delta_nu,
   nu <- exp(alpha_nu + gamma_nu*sin_t + delta_nu*cos_t)
   phi <- exp(alpha_phi + gamma_phi*sin_t + delta_phi*cos_t)
 
-  lambda <- X <- rep(NA, lgt)
+  lambda <- X <- rep(NA, lgt_total)
   lambda[1] <- X[1] <- start
-  for(i in 2:lgt){
+  for(i in 2:lgt_total){
     ind <- if(i %% L == 0){
       L
     }else{
