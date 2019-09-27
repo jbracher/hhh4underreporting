@@ -129,9 +129,9 @@ compute_sop_tv <- function(lambda1, nu, phi, kappa, psi, q, compute_Sigma = FALS
     v_X[i] <- (1 + psi[i])*v_lambda[i] + mu_X[i] + psi[i]*mu_X[i]^2
     cov1_X[i] <- kappa[i]*v_lambda[i - 1] +
       phi[i]*v_X[i - 1] # +
-      # (phi[i] + kappa[i])*mu_X[i - 1]^2 +
-      # nu[i]*mu_X[i - 1] -
-      # mu_X[i - 1]*mu_X[i] # these three lines are superfluous (add up to 0)
+    # (phi[i] + kappa[i])*mu_X[i - 1]^2 +
+    # nu[i]*mu_X[i - 1] -
+    # mu_X[i - 1]*mu_X[i] # these three lines are superfluous (add up to 0)
   }
 
   if(compute_Sigma){
@@ -375,22 +375,55 @@ hhh4u_R <- function(stsObj,
 }
 
 
-#' Fit an underreported model to an observed time series
+#' Fit an endemic-epidemic model to underreported data
 #'
-#' The reporting probability needs to be specified!
+#' Fits a time-homogeneous endemic-epidemic model with underreporting using an approximative maximum
+#' likelihood scheme.
 #'
-#' @param stsObj An sts object containing the observed time series. Only univariate time series are supported.
+#' This function can be used in a similar way as \code{surveillance::hhh4}, which fits endemic-epidemic
+#' models without accounting for underreporting. However, unlike \code{surveillance::hhh4}, \code{hhh4u}
+#' is limited to the analysis of univariate time series.
+#'
+#' Denote by \eqn{X_t} the number of cases of a given disease in a given population in week \eqn{t}.
+#' The endemic-epidemic model is defined as
+#' \deqn{X_{t} | past \sim NegBin(\lambda_t, \psi)}
+#' \deqn{\lambda_t = \nu_t + \phi_t X_{t - 1} + \kappa\lambda_{t - 1}.}
+#' Here, the negative binomial distribution is parameterized via the (conditional) mean \eqn{\lambda_t}
+#' and an overdispersion parameter \eqn{\psi} so that \eqn{Var(X_t) | \lambda_t = \lambda_t + \psi\lambda_t^2}.
+#' \eqn{\nu_t} is denoted as the endemic component, the two autoregressive terms \eqn{\phi X_{t - 1}}
+#' and \eqn{\kappa\lambda_{t - 1}} are called the epidemic component.
+#' The time-varying parameters \eqn{\nu} and \eqn{\phi} are modelled in a log-linear way, e.g.
+#' \deqn{\log(\nu) = \alpha_\nu + \gamma_\nu \sin(2\pi t/52) + \delta_\nu \cos(2\pi t/52)}
+#' to model yearly seasonality in weekly data.
+#'
+#' We here assume that the data are undereported, i.e. we do not observe the \eqn{X_t}, but \eqn{X'_t} which
+#' are linked to \eqn{X_t} through independent binomial thinning:
+#' \deqn{X'_t | X \sim Bin(X_t, q),}
+#' where \eqn{q} is the reporting probability. The reporting probability cannot be
+#' estimated from the data (in most cases these contain no information on it) and thus needs to be
+#' specified in advance.
+#'
+#' The likelihood approximation is based on an approximation of the process by a second-order
+#' equivalent process with complete reporting.
+#'
+#' For details see Bracher/Held: A marginal moment matching approach for fiting endemic-epidemic models
+#' to underreported disease surveillance counts.
+#'
+#' @param stsObj an sts object (see documentation of the \code{surveillance} package)
+#'  containing the observed time series. Only univariate time series are supported.
 #' @param control a control list, similar to the one used in \code{hhh4} from the \code{surveillance} package.
 #' The following aspects can be specified:
 #' \itemize{
-#' \item \code{ar}: List specifying the autoregressive component. Possible elements:
+#' \item \code{ar}: List specifying the autoregressive/epidemic component. Possible elements:
 #' \itemize{
-#' \item \code{f}: a formula
-#' \item \code{use_kappa}: should a feedback mechanism be used?
+#' \item \code{f}: a formula for \eqn{\log(\phi_t)}, using e.g. \code{surveillance::addSeason2formula}
+#' to account for seasonality
+#' \item \code{use_kappa}: should a feedback mechanism, ie autoregression on \eqn{lambda_{t - 1}} be used?
+#' If \code{FALSE} the parameter \eqn{\kappa} is forced to zero.
 #' }
 #' \item \code{end}: List specifying the endemic component. Possible elements:
 #' \itemize{
-#' \item \code{f}: a formula
+#' \item \code{f}: a formula for \eqn{\log(\nu)}
 #' }
 #' \item \code{family} The distibutional family, either \code{"Poisson"} or \code{"NegBin1"} for a negative binomial.
 #' \item \code{q} The assumed reporting probability
@@ -447,7 +480,12 @@ hhh4u <- function(stsObj,
 
     nu <- exp(control$matr_nu %*% beta_nu)
     phi <- exp(control$matr_phi %*% beta_phi)
-    kappa <- rep(exp(pars["log_kappa"]), lgt)
+    kappa <- if(control$ar$use_kappa){
+      rep(exp(pars["log_kappa"]), lgt)
+    }else{
+      rep(0, lgt)
+    }
+
     psi <- if(control$family[1] == "NegBin1"){
       rep(exp(pars["log_psi"]), lgt)
     }else{
