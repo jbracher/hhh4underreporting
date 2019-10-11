@@ -1,3 +1,6 @@
 ## hhh4underreporting
 
-A package for fitting hhh4-type models with underreporting. An example analysis of rotavirus gastroenteritis in Berlin and some simulation studies can be found in `examples`.
+A package for fitting hhh4-type models with underreporting. An example analysis of rotavirus gastroenteritis in Berlin and some simulation studies can be found in `examples`. Installation of the package can be done via
+
+library(devtools)
+install_github("jbracher/hhh4underreporting")
