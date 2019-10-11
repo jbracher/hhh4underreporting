@@ -448,6 +448,17 @@ hhh4u_R <- function(stsObj,
 #' \item \code{nobs}: the number of observations used for the fit
 #' \item \code{optim}: the return object of the call to optim
 #' }
+#' @examples
+#' data("rota_germany")
+#' sts_rota <- sts(observed = rota_germany[rota_germany$year %in% 2001:2008, "Berlin"],
+#'              start = c(2001, 1)) # create sts object
+#' sts_rota@observed[1] <- 1 # initial 0 causes numerical instability
+#' ctrl <- list(end = list(f = addSeason2formula(~1)), # seasonality in nu
+#'              ar = list(f = addSeason2formula(~1)), # seasonality in phi
+#'              family = "NegBin1", # negBin rather than Poisson
+#'              q = 0.043) # estimte from the literature
+#' fit <- hhh4u(sts_rota, ctrl)
+
 #' @export
 hhh4u <- function(stsObj,
                   control = list(ar = list(f = ~ 1, use_kappa = TRUE),
