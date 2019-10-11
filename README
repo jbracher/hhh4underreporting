@@ -1,1 +1,3 @@
-some code on hhh4-type models with underreporting.
+## hhh4underreporting
+
+A package for fitting hhh4-type models with underreporting. An example analysis of rotavirus gastroenteritis in Berlin and some simulation studies can be found in `examples`.
