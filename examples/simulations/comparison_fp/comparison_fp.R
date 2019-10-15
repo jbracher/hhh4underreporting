@@ -126,7 +126,7 @@ lgt <- 100
 
 # Initialize vectors and lists to store results:
 lambda1_true <- nu_true <- phi_true <- q_true <- psi_true <-
-  nu_eval <- phi_eval <- q_eval <- psi_eval <- llik_fa <- llik_approx <-
+  lambda1_eval <- nu_eval <- phi_eval <- q_eval <- psi_eval <- llik_fa <- llik_approx <-
   time_approx <- time_fa <- NA*numeric(n_sim)
 sim <- list()
 
@@ -137,11 +137,11 @@ sim <- list()
 for(i in 1:n_sim){
   set.seed(i)
   # sample true parameter values, discarding caombinations implying non-stationarity:
-  while (is.na(phi_true[i]) | (phi_true[i] + phi_true[i]^2*psi_true[i]) > 1) {
-    nu_true[i] <- runif(1, 1, 30)
+  while (is.na(phi_true[i]) | (phi_true[i]^2 + phi_true[i]^2*psi_true[i]) > 0.995) {
+    nu_true[i] <- runif(1, 3, 30)
     phi_true[i] <- runif(1, 0.01, 0.99)
+    psi_true[i] <- runif(1, 0.01, 0.15) # runif(1, 0.1, min(0.2, 0.5*(1 - phi_true[i]^2)/phi_true[i]^2))
     q_true[i] <- runif(1, 0.01, 1)
-    psi_true[i] <- runif(1, 0.01, 0.2) # runif(1, 0.1, min(0.2, 0.5*(1 - phi_true[i]^2)/phi_true[i]^2))
     lambda1_true[i] <- runif(1, 0.5*nu_true[i]/(1 - phi_true[i]), 2*nu_true[i]/(1 - phi_true[i]))
   }
 
@@ -154,7 +154,8 @@ for(i in 1:n_sim){
                              q = q_true[i], return_sts = FALSE)$X_tilde
 
   # where to evaluate the log likelihood?
-  lambda1_eval <- lambda1_true[i]
+  # could also add some error to true parameters , e.g. *runif(1, 0.9, 1.1)
+  lambda1_eval[i] <- lambda1_true[i]
   nu_eval[i] <- nu_true[i]
   phi_eval[i] <- phi_true[i]
   q_eval[i] <- q_true[i]
@@ -163,7 +164,7 @@ for(i in 1:n_sim){
   # evaluate log-likelihood using approximation:
   t1 <- Sys.time() # to measure computing time
   llik_approx[i] <- -1*hhh4underreporting:::nllik_tv_cpp(
-    observed = sim[[i]], lambda1 = lambda1_eval,
+    observed = sim[[i]], lambda1 = lambda1_eval[i],
     nu = rep(nu_eval[i], lgt),
     phi = rep(phi_eval[i], lgt),
     kappa = rep(0, lgt),
@@ -175,7 +176,7 @@ for(i in 1:n_sim){
 
   # evaluate using forward algorithm
   t1 <- Sys.time()
-  llik_fa[i] <- llik_fp(sim[[i]], lambda1_eval,
+  llik_fa[i] <- llik_fp(sim[[i]], lambda1_eval[i],
                         nu_eval[i], phi_eval[i],
                         psi_eval[i], q_eval[i], log = TRUE)
   t2 <- Sys.time()
@@ -197,7 +198,7 @@ dat <- cbind(nu = nu_true, phi = phi_true, psi = psi_true, q = q_true,
 write.csv(dat, file = paste0("results_comparison_fp_general_", lgt,  ".csv"))
 # dat <- read.csv("results_comparison_fp_general.csv")
 
-save(sim, lambda1_true, nu_true, phi_true, psi_true,
+save(sim, lambda1_true, nu_true, phi_true, psi_true, q_true,
      dat, llik_approx, llik_fa, file = paste0("results_comparison_fp_general_", lgt, ".rda"))
 
 dat <- as.data.frame(dat)
