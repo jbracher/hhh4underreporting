@@ -128,3 +128,101 @@ double nllik_tv_cpp(NumericVector observed, double lambda1, NumericVector nu, Nu
 
   return(sum(nlliks));
 }
+
+// [[Rcpp::export]]
+NumericVector coarsen_vector_sum_cpp(NumericVector vect){
+  int lgt = vect.size()/2;
+  NumericVector vect_coarse(lgt);
+  for(int i = 0; i < lgt; i++){
+    vect_coarse(i) = vect(2*i) + vect(2*i + 1);
+  }
+  return(vect_coarse);
+}
+
+// [[Rcpp::export]]
+NumericVector coarsen_vector_prod_cpp(NumericVector vect){
+  int lgt = vect.size()/2;
+  NumericVector vect_coarse(lgt);
+  for(int i = 0; i < lgt; i++){
+    vect_coarse(i) = vect(2*i) * vect(2*i + 1);
+  }
+  return(vect_coarse);
+}
+
+// [[Rcpp::export]]
+NumericVector coarsen_vector_only_first_cpp(NumericVector vect){
+  int lgt = vect.size()/2;
+  NumericVector vect_coarse(lgt);
+  for(int i = 0; i < lgt; i++){
+    vect_coarse(i) = vect(2*i);
+  }
+  return(vect_coarse);
+}
+
+// [[Rcpp::export]]
+NumericVector coarsen_vector_only_sec_cpp(NumericVector vect){
+  int lgt = vect.size()/2;
+  NumericVector vect_coarse(lgt);
+  for(int i = 0; i < lgt; i++){
+    vect_coarse(i) = vect(2*i + 1);
+  }
+  return(vect_coarse);
+}
+
+
+// [[Rcpp::export]]
+NumericVector shift_add_zero(NumericVector vect){
+  int lgt = vect.size();
+  NumericVector shifted_vect(lgt);
+  for(int i = 1; i < lgt; i++){
+    shifted_vect(i) = vect(i - 1);
+  }
+  return(shifted_vect);
+}
+
+
+// [[Rcpp::export]]
+List coarsen_sop_tv_cpp(List sop){
+
+  // coarsen means:
+  NumericVector mu_X = coarsen_vector_sum_cpp(sop["mu_X"]);
+  NumericVector mu_X_tilde = coarsen_vector_sum_cpp(sop["mu_X_tilde"]);
+
+  // coarsen variances:
+  NumericVector v_X = coarsen_vector_sum_cpp(sop["v_X"]) +
+    2 * coarsen_vector_only_sec_cpp(sop["cov1_X"]);
+  NumericVector v_X_tilde = coarsen_vector_sum_cpp(sop["v_X_tilde"]) +
+    2 * coarsen_vector_only_sec_cpp(sop["cov1_X_tilde"]);
+
+  // coarsen first-order auocovariances:
+  NumericVector cov13_X = shift_add_zero(coarsen_vector_only_sec_cpp(sop["cov1_X"])) *
+    coarsen_vector_only_first_cpp(sop["decay_cov_X"]); // first with third
+  NumericVector cov23_X = coarsen_vector_only_first_cpp(sop["cov1_X"]); // second with third
+  NumericVector cov24_X = coarsen_vector_only_first_cpp(sop["cov1_X"])*
+    coarsen_vector_only_sec_cpp(sop["decay_cov_X"]); // second with fourth
+  NumericVector cov14_X = shift_add_zero(coarsen_vector_only_sec_cpp(sop["cov1_X"]))*
+    coarsen_vector_prod_cpp(sop["decay_cov_X"]); // first with fourth
+  NumericVector cov1_X = cov13_X + cov14_X + cov23_X + cov24_X;
+
+  NumericVector cov13_X_tilde = shift_add_zero(coarsen_vector_only_sec_cpp(sop["cov1_X_tilde"])) *
+    coarsen_vector_only_first_cpp(sop["decay_cov_X_tilde"]); // first with third
+  NumericVector cov23_X_tilde = coarsen_vector_only_first_cpp(sop["cov1_X_tilde"]); // second with third
+  NumericVector cov24_X_tilde = coarsen_vector_only_first_cpp(sop["cov1_X_tilde"])*
+    coarsen_vector_only_sec_cpp(sop["decay_cov_X_tilde"]); // second with fourth
+  NumericVector cov14_X_tilde = shift_add_zero(coarsen_vector_only_sec_cpp(sop["cov1_X_tilde"]))*
+    coarsen_vector_prod_cpp(sop["decay_cov_X_tilde"]); // first with fourth
+  NumericVector cov1_X_tilde = cov13_X_tilde + cov14_X_tilde + cov23_X_tilde + cov24_X_tilde;
+
+  // coarsen decay of autocovariance function:
+  NumericVector decay_cov_X = coarsen_vector_prod_cpp(sop["decay_cov_X"]);
+  NumericVector decay_cov_X_tilde = coarsen_vector_prod_cpp(sop["decay_cov_X_tilde"]);
+
+  return Rcpp::List::create(Rcpp::Named("mu_X") = mu_X,
+                            Rcpp::Named("v_X") = v_X,
+                            Rcpp::Named("cov1_X") = cov1_X,
+                            Rcpp::Named("decay_cov_X") = decay_cov_X,
+                            Rcpp::Named("mu_X_tilde") = mu_X,
+                            Rcpp::Named("v_X_tilde") = v_X_tilde,
+                            Rcpp::Named("cov1_X_tilde") = cov1_X_tilde,
+                            Rcpp::Named("decay_cov_X_tilde") = decay_cov_X_tilde);
+}

@@ -132,6 +132,72 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// coarsen_vector_sum_cpp
+NumericVector coarsen_vector_sum_cpp(NumericVector vect);
+RcppExport SEXP _hhh4underreporting_coarsen_vector_sum_cpp(SEXP vectSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type vect(vectSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_vector_sum_cpp(vect));
+    return rcpp_result_gen;
+END_RCPP
+}
+// coarsen_vector_prod_cpp
+NumericVector coarsen_vector_prod_cpp(NumericVector vect);
+RcppExport SEXP _hhh4underreporting_coarsen_vector_prod_cpp(SEXP vectSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type vect(vectSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_vector_prod_cpp(vect));
+    return rcpp_result_gen;
+END_RCPP
+}
+// coarsen_vector_only_first_cpp
+NumericVector coarsen_vector_only_first_cpp(NumericVector vect);
+RcppExport SEXP _hhh4underreporting_coarsen_vector_only_first_cpp(SEXP vectSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type vect(vectSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_vector_only_first_cpp(vect));
+    return rcpp_result_gen;
+END_RCPP
+}
+// coarsen_vector_only_sec_cpp
+NumericVector coarsen_vector_only_sec_cpp(NumericVector vect);
+RcppExport SEXP _hhh4underreporting_coarsen_vector_only_sec_cpp(SEXP vectSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type vect(vectSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_vector_only_sec_cpp(vect));
+    return rcpp_result_gen;
+END_RCPP
+}
+// shift_add_zero
+NumericVector shift_add_zero(NumericVector vect);
+RcppExport SEXP _hhh4underreporting_shift_add_zero(SEXP vectSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type vect(vectSEXP);
+    rcpp_result_gen = Rcpp::wrap(shift_add_zero(vect));
+    return rcpp_result_gen;
+END_RCPP
+}
+// coarsen_sop_tv_cpp
+List coarsen_sop_tv_cpp(List sop);
+RcppExport SEXP _hhh4underreporting_coarsen_sop_tv_cpp(SEXP sopSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type sop(sopSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_sop_tv_cpp(sop));
+    return rcpp_result_gen;
+END_RCPP
+}
 // back_seas_cpp
 NumericVector back_seas_cpp(NumericVector vect, int to, int lgt);
 RcppExport SEXP _hhh4underreporting_back_seas_cpp(SEXP vectSEXP, SEXP toSEXP, SEXP lgtSEXP) {
@@ -273,6 +339,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_hhh4underreporting_compute_sop_tv_cpp", (DL_FUNC) &_hhh4underreporting_compute_sop_tv_cpp, 6},
     {"_hhh4underreporting_reparam_tv_cpp", (DL_FUNC) &_hhh4underreporting_reparam_tv_cpp, 6},
     {"_hhh4underreporting_nllik_tv_cpp", (DL_FUNC) &_hhh4underreporting_nllik_tv_cpp, 7},
+    {"_hhh4underreporting_coarsen_vector_sum_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_sum_cpp, 1},
+    {"_hhh4underreporting_coarsen_vector_prod_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_prod_cpp, 1},
+    {"_hhh4underreporting_coarsen_vector_only_first_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_only_first_cpp, 1},
+    {"_hhh4underreporting_coarsen_vector_only_sec_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_only_sec_cpp, 1},
+    {"_hhh4underreporting_shift_add_zero", (DL_FUNC) &_hhh4underreporting_shift_add_zero, 1},
+    {"_hhh4underreporting_coarsen_sop_tv_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_sop_tv_cpp, 1},
     {"_hhh4underreporting_back_seas_cpp", (DL_FUNC) &_hhh4underreporting_back_seas_cpp, 3},
     {"_hhh4underreporting_get_weight_matrix_seas_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_seas_cpp, 3},
     {"_hhh4underreporting_prod", (DL_FUNC) &_hhh4underreporting_prod, 1},
