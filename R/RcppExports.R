@@ -25,14 +25,6 @@ compute_sop_tv_cpp <- function(lambda1, nu, phi, kappa, psi, q) {
     .Call('_hhh4underreporting_compute_sop_tv_cpp', PACKAGE = 'hhh4underreporting', lambda1, nu, phi, kappa, psi, q)
 }
 
-reparam_tv_cpp <- function(lambda1, nu, phi, kappa, psi, q) {
-    .Call('_hhh4underreporting_reparam_tv_cpp', PACKAGE = 'hhh4underreporting', lambda1, nu, phi, kappa, psi, q)
-}
-
-nllik_tv_cpp <- function(observed, lambda1, nu, phi, kappa, psi, q) {
-    .Call('_hhh4underreporting_nllik_tv_cpp', PACKAGE = 'hhh4underreporting', observed, lambda1, nu, phi, kappa, psi, q)
-}
-
 coarsen_vector_sum_cpp <- function(vect) {
     .Call('_hhh4underreporting_coarsen_vector_sum_cpp', PACKAGE = 'hhh4underreporting', vect)
 }
@@ -55,6 +47,14 @@ shift_add_zero <- function(vect) {
 
 coarsen_sop_tv_cpp <- function(sop) {
     .Call('_hhh4underreporting_coarsen_sop_tv_cpp', PACKAGE = 'hhh4underreporting', sop)
+}
+
+reparam_tv_cpp <- function(lambda1, nu, phi, kappa, psi, q, decoarsen) {
+    .Call('_hhh4underreporting_reparam_tv_cpp', PACKAGE = 'hhh4underreporting', lambda1, nu, phi, kappa, psi, q, decoarsen)
+}
+
+nllik_tv_cpp <- function(observed, lambda1, nu, phi, kappa, psi, q, decoarsen) {
+    .Call('_hhh4underreporting_nllik_tv_cpp', PACKAGE = 'hhh4underreporting', observed, lambda1, nu, phi, kappa, psi, q, decoarsen)
 }
 
 back_seas_cpp <- function(vect, to, lgt) {

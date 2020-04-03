@@ -465,6 +465,7 @@ hhh4u <- function(stsObj,
                                  end = list(f = ~ 1),
                                  family = c("Poisson", "NegBin1"),
                                  q = NULL,
+                                 decoarsen = FALSE,
                                  subset = 1:nrow(stsObj),
                                  data = list(t = stsObj@epoch - min(stsObj@epoch)),
                                  start = NULL,
@@ -475,15 +476,8 @@ hhh4u <- function(stsObj,
   control <- setControl(control = control, stsObj = stsObj)
   observed <- stsObj@observed[control$subset]
 
-  if(!length(control$q) %in% c(1, length(observed))){
-    stop("q needs to be either scalar or a vector of the same length as control$subset")
-  }
-  if(any(control$q <= 0 | control$q > 1)){
-    stop("control$q needs to be from the interval (0, 1].")
-  }
-
   nllik_vect <- function(pars){
-    lgt <- length(observed)
+    lgt <- ifelse(control$decoarsen, 2, 1)*length(observed)
     lambda1 = exp(pars["log_lambda1"])
 
     beta_nu <- pars[grepl("end.", names(pars))]
@@ -506,7 +500,7 @@ hhh4u <- function(stsObj,
 
     nllik_tv_cpp(observed = observed, lambda1 = lambda1, nu = nu,
                  phi = phi, kappa = kappa, psi = psi,
-                 q = q)
+                 q = q, decoarsen = control$decoarsen)
   }
 
   opt <- optim(par = control$start, fn = nllik_vect, hessian = control$return_se,
@@ -570,6 +564,11 @@ hhh4u <- function(stsObj,
   return(ret)
 }
 
+# helper function to handle subsets when decoarsening is applied:
+decoarsen_indices <- function(inds){
+  rep(2*inds, each = 2) - rep(c(1, 0), length(inds))
+}
+
 #' Check and complete the control list
 #'
 #' Similar to \code{surveillance:::setControl and surveillance:::makeControl} this function
@@ -588,6 +587,30 @@ setControl <- function(control, stsObj){
   control <- modifyList(defaultControl, control)
 
   # check provided arguments:
+  if(!control$decoarsen){
+    if(!length(control$q) %in% c(1, length(observed))){
+      stop("q needs to be either scalar or a vector of the same length as control$subset")
+    }
+    for(i in seq_along(control$data)){
+      if(length(control$data[[i]]) != nrow(stsObj@observed)){
+        stop("data needs to contain covariate vectors of same length as stsObj@observed.")
+      }
+    }
+  }else{
+    if(!length(control$q) %in% c(1, 2*length(observed))){
+      stop("As decoarsen = TRUE, q needs to be either scalar or a vector of twice the length of control$subset")
+    }
+    for(i in seq_along(control$data)){
+      if(length(control$data[[i]]) != 2*nrow(stsObj@observed)){
+        stop("As decoarsen = TRUE, data needs to contain covariate vectors of twice length of stsObj@observed.")
+      }
+    }
+  }
+
+  if(any(control$q <= 0 | control$q > 1)){
+    stop("control$q needs to be from the interval (0, 1].")
+  }
+
   if(!is.list(control$ar)){
     stop("control$ar must be a list.")
   }
@@ -598,7 +621,7 @@ setControl <- function(control, stsObj){
     stop("A value for q needs to be provided in the control argument.")
   }
   if(length(control$q) == 1){
-    control$q <- rep(control$q, nTime)
+    control$q <- rep(control$q, ifelse(control$decoarsen, 2*nTime, nTime))
   }
   if(!inherits(control$end$f, "formula")){
     stop("'control$end$f' must be a formula")
@@ -628,13 +651,14 @@ setControl <- function(control, stsObj){
   if(!is.list(control$data)){
     stop("control$data must be a named list of covariates")
   }
-  for(i in seq_along(control$data)){
-    if(length(control$data[[i]]) != nrow(stsObj@observed)){
-      stop("data needs to contain covariate vectors of same length as stsObj@observed.")
-    }
-  }
+
   # construct the model matrices
-  data.fr <- as.data.frame(control$data)[control$subset, , drop = FALSE]
+  subset <- if(control$decoarsen){
+    decoarsen_indices(control$subset)
+  }else{
+    control$subset
+  }
+  data.fr <- as.data.frame(control$data)[subset, , drop = FALSE]
   control$matr_nu <- model.matrix(control$end$f, data = data.fr)
   control$matr_phi <- model.matrix(control$ar$f, data = data.fr)
 

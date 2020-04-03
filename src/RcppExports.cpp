@@ -99,39 +99,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// reparam_tv_cpp
-List reparam_tv_cpp(double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, NumericVector q);
-RcppExport SEXP _hhh4underreporting_reparam_tv_cpp(SEXP lambda1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type lambda1(lambda1SEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
-    rcpp_result_gen = Rcpp::wrap(reparam_tv_cpp(lambda1, nu, phi, kappa, psi, q));
-    return rcpp_result_gen;
-END_RCPP
-}
-// nllik_tv_cpp
-double nllik_tv_cpp(NumericVector observed, double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, NumericVector q);
-RcppExport SEXP _hhh4underreporting_nllik_tv_cpp(SEXP observedSEXP, SEXP lambda1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type observed(observedSEXP);
-    Rcpp::traits::input_parameter< double >::type lambda1(lambda1SEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type nu(nuSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
-    rcpp_result_gen = Rcpp::wrap(nllik_tv_cpp(observed, lambda1, nu, phi, kappa, psi, q));
-    return rcpp_result_gen;
-END_RCPP
-}
 // coarsen_vector_sum_cpp
 NumericVector coarsen_vector_sum_cpp(NumericVector vect);
 RcppExport SEXP _hhh4underreporting_coarsen_vector_sum_cpp(SEXP vectSEXP) {
@@ -195,6 +162,41 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type sop(sopSEXP);
     rcpp_result_gen = Rcpp::wrap(coarsen_sop_tv_cpp(sop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// reparam_tv_cpp
+List reparam_tv_cpp(double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, NumericVector q, bool decoarsen);
+RcppExport SEXP _hhh4underreporting_reparam_tv_cpp(SEXP lambda1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP, SEXP decoarsenSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lambda1(lambda1SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
+    Rcpp::traits::input_parameter< bool >::type decoarsen(decoarsenSEXP);
+    rcpp_result_gen = Rcpp::wrap(reparam_tv_cpp(lambda1, nu, phi, kappa, psi, q, decoarsen));
+    return rcpp_result_gen;
+END_RCPP
+}
+// nllik_tv_cpp
+double nllik_tv_cpp(NumericVector observed, double lambda1, NumericVector nu, NumericVector phi, NumericVector kappa, NumericVector psi, NumericVector q, bool decoarsen);
+RcppExport SEXP _hhh4underreporting_nllik_tv_cpp(SEXP observedSEXP, SEXP lambda1SEXP, SEXP nuSEXP, SEXP phiSEXP, SEXP kappaSEXP, SEXP psiSEXP, SEXP qSEXP, SEXP decoarsenSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type observed(observedSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda1(lambda1SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type nu(nuSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type kappa(kappaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type q(qSEXP);
+    Rcpp::traits::input_parameter< bool >::type decoarsen(decoarsenSEXP);
+    rcpp_result_gen = Rcpp::wrap(nllik_tv_cpp(observed, lambda1, nu, phi, kappa, psi, q, decoarsen));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -337,14 +339,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_hhh4underreporting_nu_to_nu_star_cov_cpp", (DL_FUNC) &_hhh4underreporting_nu_to_nu_star_cov_cpp, 2},
     {"_hhh4underreporting_nllik_cov_cpp", (DL_FUNC) &_hhh4underreporting_nllik_cov_cpp, 9},
     {"_hhh4underreporting_compute_sop_tv_cpp", (DL_FUNC) &_hhh4underreporting_compute_sop_tv_cpp, 6},
-    {"_hhh4underreporting_reparam_tv_cpp", (DL_FUNC) &_hhh4underreporting_reparam_tv_cpp, 6},
-    {"_hhh4underreporting_nllik_tv_cpp", (DL_FUNC) &_hhh4underreporting_nllik_tv_cpp, 7},
     {"_hhh4underreporting_coarsen_vector_sum_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_sum_cpp, 1},
     {"_hhh4underreporting_coarsen_vector_prod_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_prod_cpp, 1},
     {"_hhh4underreporting_coarsen_vector_only_first_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_only_first_cpp, 1},
     {"_hhh4underreporting_coarsen_vector_only_sec_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_vector_only_sec_cpp, 1},
     {"_hhh4underreporting_shift_add_zero", (DL_FUNC) &_hhh4underreporting_shift_add_zero, 1},
     {"_hhh4underreporting_coarsen_sop_tv_cpp", (DL_FUNC) &_hhh4underreporting_coarsen_sop_tv_cpp, 1},
+    {"_hhh4underreporting_reparam_tv_cpp", (DL_FUNC) &_hhh4underreporting_reparam_tv_cpp, 7},
+    {"_hhh4underreporting_nllik_tv_cpp", (DL_FUNC) &_hhh4underreporting_nllik_tv_cpp, 8},
     {"_hhh4underreporting_back_seas_cpp", (DL_FUNC) &_hhh4underreporting_back_seas_cpp, 3},
     {"_hhh4underreporting_get_weight_matrix_seas_cpp", (DL_FUNC) &_hhh4underreporting_get_weight_matrix_seas_cpp, 3},
     {"_hhh4underreporting_prod", (DL_FUNC) &_hhh4underreporting_prod, 1},
