@@ -428,6 +428,7 @@ hhh4u_R <- function(stsObj,
 #' \item \code{family} The distibutional family, either \code{"Poisson"} or \code{"NegBin1"} for a negative binomial.
 #' \item \code{q} The assumed reporting probability
 #' \item \code{subset} The subset of the data to which the model shall be fitted; needs to contained within \code{1:nrow(stsObj@observed) }
+#' \item \code{decoarsen} should a correction be applied to fit the model as if it operated on a half-weekly basis?
 #' \item \code{start} Initial value passed to \code{optim}; needs to have the correct length and naming.
 #' \item \code{optimize} Additional arguments passed to \code{optim}
 #' \item \code{return_se} Should the standard errors be returned? In case of numerical problems it can be reasonable to deactivate this.

@@ -5,9 +5,10 @@
 \title{Fit an endemic-epidemic model to underreported data}
 \usage{
 hhh4u(stsObj, control = list(ar = list(f = ~1, use_kappa = TRUE), end =
-  list(f = ~1), family = c("Poisson", "NegBin1"), q = NULL, subset =
-  1:nrow(stsObj), data = list(t = stsObj@epoch - min(stsObj@epoch)), start
-  = NULL, optimizer = list(maxit = 5000), return_se = TRUE))
+  list(f = ~1), family = c("Poisson", "NegBin1"), q = NULL, decoarsen =
+  FALSE, subset = 1:nrow(stsObj), data = list(t = stsObj@epoch -
+  min(stsObj@epoch)), start = NULL, optimizer = list(maxit = 5000),
+  return_se = TRUE))
 }
 \arguments{
 \item{stsObj}{an sts object (see documentation of the \code{surveillance} package)
@@ -30,6 +31,7 @@ If \code{FALSE} the parameter \eqn{\kappa} is forced to zero.
 \item \code{family} The distibutional family, either \code{"Poisson"} or \code{"NegBin1"} for a negative binomial.
 \item \code{q} The assumed reporting probability
 \item \code{subset} The subset of the data to which the model shall be fitted; needs to contained within \code{1:nrow(stsObj@observed) }
+\item \code{decoarsen} should a correction be applied to fit the model as if it operated on a half-weekly basis?
 \item \code{start} Initial value passed to \code{optim}; needs to have the correct length and naming.
 \item \code{optimize} Additional arguments passed to \code{optim}
 \item \code{return_se} Should the standard errors be returned? In case of numerical problems it can be reasonable to deactivate this.
