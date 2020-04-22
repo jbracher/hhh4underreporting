@@ -6,4 +6,4 @@ library(devtools)
 install_github("jbracher/hhh4underreporting")
 ?hhh4u
 
-This package has been used for the preprint Bracher/Held (2020): A marginal moment matching approach for fitting endemic-epidemic models to underreported disease surveillance counts, https://arxiv.org/abs/2003.05885
+This package has been used for the preprint Bracher/Held (2020): A marginal moment matching approach for fitting endemic-epidemic models to underreported disease surveillance counts, https://arxiv.org/abs/2003.05885.
