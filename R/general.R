@@ -351,8 +351,14 @@ hhh4u_R <- function(stsObj,
   ret$coefficients <- opt$par
   ret$se <- ret$cov <- NULL
   if(control$return_se){
-    ret$cov <- solve(opt$hessian)
-    ret$se <- sqrt(diag(ret$cov))
+    if(opt$hessian[1, 1] < 0.001){
+      cov0 <- solve(opt$hessian[-1, -1])
+      ret$cov <- rbind(log_lambda1 = NA, cbind(log_lambda1 = NA, cov0))
+      ret$se <- sqrt(diag(ret$cov))
+    }else{
+      ret$cov <- solve(opt$hessian)
+      ret$se <- sqrt(diag(ret$cov))
+    }
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
                        kappa = kappa, psi = psi, q = q)
@@ -535,9 +541,17 @@ hhh4u <- function(stsObj,
   ret$coefficients <- opt$par
   ret$q <- control$q
   ret$se <- ret$cov <- NULL
+  ret$coefficients <- opt$par
+  ret$se <- ret$cov <- NULL
   if(control$return_se){
-    ret$cov <- solve(opt$hessian)
-    ret$se <- sqrt(diag(ret$cov))
+    if(opt$hessian[1, 1] < 0.001){
+      cov0 <- solve(opt$hessian[-1, -1])
+      ret$cov <- rbind(log_lambda1 = NA, cbind(log_lambda1 = NA, cov0))
+      ret$se <- sqrt(diag(ret$cov))
+    }else{
+      ret$cov <- solve(opt$hessian)
+      ret$se <- sqrt(diag(ret$cov))
+    }
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
                        kappa = kappa, psi = psi, q = q)
@@ -587,19 +601,36 @@ setControl <- function(control, stsObj){
   defaultControl <- eval(formals(hhh4u)$control)
   control <- modifyList(defaultControl, control)
 
-  # check provided arguments:
+  # check provided arguments (differently for whether decoarsening is  done or not):
+  # Without de-coarsening:
   if(!control$decoarsen){
+    # check q:
     if(!length(control$q) %in% c(1, length(observed))){
-      stop("q needs to be either scalar or a vector of the same length as control$subset")
+      stop("q needs to be either a scalar or a vector of the same length as control$subset")
     }
+    if(length(control$q) == 1){
+      control$q <- rep(control$q, nTime)
+    }
+
+    # check data:
     for(i in seq_along(control$data)){
       if(length(control$data[[i]]) != nrow(stsObj@observed)){
         stop("data needs to contain covariate vectors of same length as stsObj@observed.")
       }
     }
-  }else{
+  }else{ # with de-coarsening:
+    # check q:
     if(!length(control$q) %in% c(1, 2*length(observed))){
-      stop("As decoarsen = TRUE, q needs to be either scalar or a vector of twice the length of control$subset")
+      stop("As decoarsen = TRUE, q needs to be either NULL, scalar or a vector of twice the length of control$subset")
+    }
+    if(length(control$q) == 1){
+      control$q <- rep(control$q, 2*nTime)
+    }
+
+    # check data and adapt to decoarsening:
+    # adapt length of t automatically:
+    if(all(control$data$t == defaultControl$data$t)){
+      control$data$t <- rep(control$data$t, each = 2) + rep(c(0, 0.5), nTime)
     }
     for(i in seq_along(control$data)){
       if(length(control$data[[i]]) != 2*nrow(stsObj@observed)){
@@ -617,12 +648,6 @@ setControl <- function(control, stsObj){
   }
   if(!is.list(control$end)){
     stop("control$end must be a list.")
-  }
-  if(is.null(control$q)){
-    stop("A value for q needs to be provided in the control argument.")
-  }
-  if(length(control$q) == 1){
-    control$q <- rep(control$q, ifelse(control$decoarsen, 2*nTime, nTime))
   }
   if(!inherits(control$end$f, "formula")){
     stop("'control$end$f' must be a formula")
@@ -674,10 +699,19 @@ setControl <- function(control, stsObj){
   start_psi <- if(control$family[1] == "NegBin1") c(log_psi = -1) else NULL
   default_start <- c(start_lambda1, start_end, start_ar,
                      start_kappa, start_psi)
+
   if(is.null(control$start)){
     control$start <- default_start
   }else{
-    if(length(control$start) != length(default_start)) stop("control$start is not of the right length.")
+    if(length(control$start) != length(default_start)){
+      stop("control$start needs to be a named vector with the following elements: ",
+           paste(names(default_start), collapse = ","))
+    }else{
+      if(any(sort(names(control$start)) != sort(names(default_start)))){
+        stop("control$start needs to be a named vector with the following elements: ",
+             paste(names(default_start), collapse = ","))
+      }
+    }
   }
 
   return(control)
