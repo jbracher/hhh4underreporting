@@ -523,8 +523,8 @@ hhh4u <- function(stsObj,
   beta_phi <- opt$par[grepl("ar.", names(opt$par))]
   nu <- exp(control$matr_nu %*% beta_nu)
   phi <- exp(control$matr_phi %*% beta_phi)
-  kappa <- rep(exp(opt$par["log_kappa"]), length(observed))
-  psi <- rep(exp(opt$par["log_psi"]), length(observed))
+  kappa <- rep(exp(opt$par["log_kappa"]), length(observed)*ifelse(control$decoarsen, 2, 1))
+  psi <- rep(exp(opt$par["log_psi"]), length(observed)*ifelse(control$decoarsen, 2, 1))
   q <- control$q
 
   # get corresponding parameters for unthinned process:
@@ -605,7 +605,7 @@ setControl <- function(control, stsObj){
   # Without de-coarsening:
   if(!control$decoarsen){
     # check q:
-    if(!length(control$q) %in% c(1, length(observed))){
+    if(!length(control$q) %in% c(1, length(control$subset))){
       stop("q needs to be either a scalar or a vector of the same length as control$subset")
     }
     if(length(control$q) == 1){
@@ -620,7 +620,7 @@ setControl <- function(control, stsObj){
     }
   }else{ # with de-coarsening:
     # check q:
-    if(!length(control$q) %in% c(1, 2*length(observed))){
+    if(!length(control$q) %in% c(1, 2*length(control$subset))){
       stop("As decoarsen = TRUE, q needs to be either NULL, scalar or a vector of twice the length of control$subset")
     }
     if(length(control$q) == 1){
