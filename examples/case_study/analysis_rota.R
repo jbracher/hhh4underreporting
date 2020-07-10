@@ -27,21 +27,38 @@ values_q <- 1:n_steps_q/n_steps_q
 yearly_sums <- colSums(matrix(dat, nrow = 52))
 
 #############################################################
-# analyse with seasonality only in endemic component:
+# analyse with seasonality only in endemic component, no decoarsening:
 fits_seas_end <- list()
 pars_seas_end <- matrix(ncol = 7, nrow = length(values_q))
 colnames(pars_seas_end) <- c("log_lambda1", "alpha_nu", "gamma_nu", "delta_nu", "alpha_phi", "alpha_kappa", "log_psi")
-for(i in 1:n_steps_q){
+for(i in n_steps_q:1){
   # store fit
   fits_seas_end[[i]] <- hhh4u(sts_dat,
                              control = list(end = list(f = addSeason2formula(~1)),
                                             family = "NegBin1",
                                             q = values_q[i],
+                                            start = if(i == n_steps_q){
+                                              NULL
+                                            }else{
+                                              fits_seas_end[[i + 1]]$coefficients
+                                            },
                                             return_se = FALSE))
+  print(paste("First: loglik =", fits_seas_end[[i]]$loglikelihood))
+
+
+  fits_seas_end[[i]] <- hhh4u(sts_dat,
+                              control = list(end = list(f = addSeason2formula(~1)),
+                                             family = "NegBin1",
+                                             q = values_q[i],
+                                             start = fits_seas_end[[i]]$coefficients,
+                                             return_se = FALSE))
+  print(paste("Second: loglik =", fits_seas_end[[i]]$loglikelihood))
+
   # store parameters
   pars_seas_end[i, ] <- fits_seas_end[[i]]$coefficients
   print(i)
 }
+# dir.create("results")
 # save(fits_seas_end, pars_seas_end, file = paste0("results/fits_rota_seas_end_", region, "_0105.rda"))
 # load("/home/johannes/Documents/underreporting/real_data/rotavirus_hhh4latent/likelihood/fits_seas_end_rota.rda")
 
@@ -54,8 +71,6 @@ lines(values_q, pars_seas_end[, "delta_nu"], type = "b")
 
 plot(values_q, exp(pars_seas_end[, "alpha_phi"]), ylim = c(0, 1), type = "b")
 lines(values_q, exp(pars_seas_end[, "alpha_kappa"]), type = "b")
-abline(v = 0.2)
-abline(h = 0.79)
 
 plot(values_q, exp(pars_seas_end[, "log_psi"]), type = "b", ylim = c(0, 0.2))
 
@@ -63,7 +78,7 @@ plot(values_q, exp(pars_seas_end[, "log_psi"]), type = "b", ylim = c(0, 0.2))
 for(i in 1:n_steps_q) print(fits_seas_end[[i]]$convergence) # all successfully converged
 
 #############################################################
-# analyse with seasonality in both components:
+# analyse with seasonality in both components, no decoarsening:
 fits_seas_both <- list()
 pars_seas_both <- matrix(ncol = 9, nrow = length(values_q))
 colnames(pars_seas_both) <- c("log_lambda1",
@@ -107,9 +122,9 @@ for(i in n_steps_q:1){
   pars_seas_both[i, ] <- fits_seas_both[[i]]$coefficients
 }
 
-# save(fits_seas_both, pars_seas_both, file = paste0("results/fits_rota_seas_both_", region, "0108_general.rda"))
-# load(paste0("results/fits_rota_seas_both_", region, "0108_general.rda"))
-write.csv(pars_seas_both, paste0("results/fits_rota_seas_both_", region, "0108_general.csv"), row.names = FALSE)
+# save(fits_seas_both, pars_seas_both, file = paste0("results/fits_rota_seas_both_", region, "0108.rda"))
+# load(paste0("results/fits_rota_seas_both_", region, "0108.rda"))
+# write.csv(pars_seas_both, paste0("results/fits_rota_seas_both_", region, "0108.csv"), row.names = FALSE)
 
 # compute Reff in the form of intercept and sine/cosine waves (required for plot function)
 Reff <- pars_seas_both[, 5:7]
@@ -186,10 +201,132 @@ axis(1, at = c(1, 13, 26, 39, 52))
 axis(2); box()
 for(i in order_plot) lines_seas(Reff[i, ], col = cols[i], exp = TRUE)
 
+
+#############################################################
+# analyse with seasonality in both components and decoarsening:
+# THIS IS THE MAIN MODEL IN THE MANUSCRIPT
+fit_seas_both_decoarsen <- list()
+pars_seas_both_decoarsen <- matrix(ncol = 9, nrow = length(values_q))
+colnames(pars_seas_both_decoarsen) <- c("log_lambda1",
+                                        "alpha_nu", "gamma_nu", "delta_nu",
+                                        "alpha_phi", "gamma_phi", "delta_phi",
+                                        "alpha_kappa", "log_psi")
+
+
+for(i in n_steps_q:1){
+  print(paste("Starting ", i))
+
+  # we here re-run the fitting function three times, always using the result from the
+  # previous iteration as the starting value. This improves convergence.
+  fit_seas_both_decoarsen[[i]] <- hhh4u(sts_dat,
+                                        control = list(end = list(f = addSeason2formula(~1)),
+                                                       ar = list(f = addSeason2formula(~1)),
+                                                       family = "NegBin1",
+                                                       q = values_q[i],
+                                                       decoarsen = TRUE,
+                                                       return_se = FALSE))
+  print(paste("First: loglik =", fit_seas_both_decoarsen[[i]]$loglikelihood))
+
+  fit_seas_both_decoarsen[[i]] <- hhh4u(sts_dat,
+                                        control = list(end = list(f = addSeason2formula(~1)),
+                                                       ar = list(f = addSeason2formula(~1)),
+                                                       family = "NegBin1",
+                                                       q = values_q[i],
+                                                       decoarsen = TRUE,
+                                                       return_se = FALSE,
+                                                       start = fit_seas_both_decoarsen[[i]]$coefficients))
+  print(paste("Second: loglik =", fit_seas_both_decoarsen[[i]]$loglikelihood))
+
+  fit_seas_both_decoarsen[[i]] <- hhh4u(sts_dat,
+                                        control = list(end = list(f = addSeason2formula(~1)),
+                                                       ar = list(f = addSeason2formula(~1)),
+                                                       family = "NegBin1",
+                                                       q = values_q[i],
+                                                       decoarsen = TRUE,
+                                                       return_se = FALSE,
+                                                       start = fit_seas_both_decoarsen[[i]]$coefficients))
+  print(paste("Third: loglik =", fit_seas_both_decoarsen[[i]]$loglikelihood))
+
+  # store parameters:
+  pars_seas_both_decoarsen[i, ] <- fit_seas_both_decoarsen[[i]]$coefficients
+}
+
+save(fit_seas_both_decoarsen, pars_seas_both_decoarsen, file = paste0("results/fits_rota_seas_both_decoarsen_", region, "0108.rda"))
+# load(paste0("results/fits_rota_seas_both_", region, "0108.rda"))
+# write.csv(pars_seas_both_decoarsen, paste0("results/fits_rota_seas_both_decoarsen_", region, "0108.csv"), row.names = FALSE)
+
+# compute Reff in the form of intercept and sine/cosine waves (required for plot function)
+Reff_decoarsen <- pars_seas_both_decoarsen[, 5:7]
+Reff_decoarsen[, 1] <- Reff_decoarsen[, 1] - log(1 - exp(pars_seas_both_decoarsen[, "alpha_kappa"]))
+colnames(Reff_decoarsen) <- c("alpha_Reff", "gamma_Reff", "delta_Reff")
+
+# check convergence:
+for(i in 1:n_steps_q) print(fit_seas_both_decoarsen[[i]]$convergence) # all successfully converged
+
+
+#############################################################
+# plot as in manuscript:
+
+# define colours:
+library(viridis, quietly = TRUE)
+cols <- rev(viridis(n_steps_q))
+cols[2] <- "red"
+
+# structure plot area:
+layout(matrix(c(1, 2,
+                1, 2,
+                3, 5,
+                4, 5), ncol = 2, byrow = TRUE))
+order_plot <- c(1:n_steps_q, 2)
+par(mar = c(5.1, 4.5, 0.2, 1.0), las = 1, cex = 0.9, font.main = 1, family = "serif")
+
+# plot nu:
+plot(NULL, ylim = c(-1, 5.5), xlim = c(1, 52), xlab = "calendar week", ylab = expression(hat(nu)[t]), axes = FALSE)
+axis(1, at = c(1, 13, 26, 39, 52))
+box(); axis(2, at = log(c(1, 2, 5, 10, 20, 50, 100, 250)), labels = c(1, 2, 5, 10, 20, 50, 100, 250))
+for(i in order_plot) lines_seas(pars_seas_both_decoarsen[i, 2:4], col = cols[i], exp = FALSE)
+
+# plot phi:
+plot(NULL, ylim = c(0, 1.15), xlim = c(1, 52), xlab = "calendar week",
+     ylab = expression(hat(phi1)[t]), axes = FALSE)
+axis(1, at = c(1, 13, 26, 39, 52))
+axis(2); box()
+for(i in order_plot) lines_seas(pars_seas_both_decoarsen[i, 5:7], col = cols[i], exp = TRUE)
+vals_x <- seq(from = 3, to = 47, length.out = n_steps_q)
+text(26, 1.1, expression(pi))
+points(vals_x, rep(1.05, n_steps_q), col = cols, pch = 15)
+text(vals_x[c(1, 12, 25, 37, 50)], 1, labels = c(".02", ".25", ".5", ".75", "1"), cex = 0.8)
+
+# plot kappa:
+plot(NULL, xlim = 0:1, ylim = c(0, 0.6), axes = FALSE,
+     type = "l", xlab = expression(pi), ylab = expression(hat(kappa)))
+points(values_q, exp(pars_seas_both_decoarsen[, "alpha_kappa"]), pch = 16, cex = 0.7, col = cols)
+axis(1)
+axis(2, at = 0:6/10)
+box()
+
+# plot psi:
+plot(NULL, xlim = 0:1,  ylim = c(0.09, 0.13), axes = FALSE,
+     type = "l", xlab = expression(pi), ylab = expression(hat(psi)))
+axis(1)
+axis(2, at = c(0.09, 0.1, 0.11, 0.12, 0.13))
+box()
+points(values_q, exp(pars_seas_both_decoarsen[, "log_psi"]), pch = 16, cex = 0.7, col = cols)
+
+# plot Reff
+plot(NULL, ylim = c(0, 1.1), xlim = c(1, 52), xlab = "calendar week",
+     ylab = expression(hat(R)["eff, t"]), axes = FALSE)
+axis(1, at = c(1, 13, 26, 39, 52))
+axis(2); box()
+for(i in order_plot) lines_seas(Reff_decoarsen[i, ], col = cols[i], exp = TRUE)
+
+
+
+
 #############################################################
 # get numbers for table:
 
-# model with reporting probability 0.043:
+# model with reporting probability 0.043, no de-coarsening:
 # fit model:
 ctrl_0043 <- list(end = list(f = addSeason2formula(~1)),
                   ar = list(f = addSeason2formula(~1)),
@@ -209,6 +346,29 @@ names(entries_tab_0043) <- c("log_lambda1", "alpha_nu", "gamma_nu", "delta_nu",
                              "alpha_phi", "gamma_phi", "delta_phi",
                              "alpha_kappa", "log_psi")
 
+
+# model with reporting probability 0.043, with de-coarsening:
+# fit model:
+ctrl_0043_decoarsen <- list(end = list(f = addSeason2formula(~1)),
+                  ar = list(f = addSeason2formula(~1)),
+                  family = "NegBin1",
+                  return_se = TRUE,
+                  q = 0.043,
+                  decoarsen = TRUE)
+fit_0043.0_decoarsen <- hhh4u(sts_dat, ctrl_0043_decoarsen)
+ctrl_0043_decoarsen$start <- fit_0043.0_decoarsen$coefficients # re-fit once to improve convergence
+fit_0043_decoarsen <- hhh4u(sts_dat, ctrl_0043_decoarsen)
+# for comparison:
+fit_0043_decoarsen$loglikelihood - fits_seas_both_decoarsen[[2]]$loglikelihood
+fit_0043_decoarsen$coefficients / fits_seas_both_decoarsen[[2]]$coefficients
+# get entries for table:
+entries_tab_0043_decoarsen <- paste0(format(fit_0043_decoarsen$coefficients, digits = 1),
+                           " (", format(fit_0043_decoarsen$se, digits = 1, scientific = FALSE), ")")
+names(entries_tab_0043_decoarsen) <- c("log_lambda1", "alpha_nu", "gamma_nu", "delta_nu",
+                             "alpha_phi", "gamma_phi", "delta_phi",
+                             "alpha_kappa", "log_psi")
+
+
 # model with reporting probability 0.043, then 0.063:
 # define time-varying reporting probability:
 q_timevar <- c(rep(0.043, 4*52), seq(from = 0.043, to = 0.063, length.out = 52),
@@ -226,6 +386,22 @@ fit_0043.0063 <- hhh4u(sts_dat, ctrl_0043.0063)
 entries_tab_0043.0063 <- paste0(format(fit_0043.0063$coefficients, digits = 1),
                                 " (", format(fit_0043.0063$se, digits = 1, scientific = FALSE), ")")
 names(entries_tab_0043.0063) <- names(entries_tab_0043)
+
+
+# model with reporting probability 0.043, then 0.063, with de-coarsening:
+# define time-varying reporting probability:
+# fit model:
+ctrl_0043.0063_decoarsen <- ctrl_0043.0063
+ctrl_0043.0063_decoarsen$q <- rep(ctrl_0043.0063$q, each = 2)
+ctrl_0043.0063_decoarsen$decoarsen <- TRUE
+
+fit_0043.0063_decoarsen.0 <- hhh4u(sts_dat, control = ctrl_0043.0063_decoarsen)
+ctrl_0043.0063_decoarsen$start <- fit_0043.0063_decoarsen.0$coefficients
+fit_0043.0063_decoarsen <- hhh4u(sts_dat, ctrl_0043.0063_decoarsen)
+# get entries for table:
+entries_tab_0043.0063_decoarsen <- paste0(format(fit_0043.0063_decoarsen$coefficients, digits = 1),
+                                " (", format(fit_0043.0063_decoarsen$se, digits = 1, scientific = FALSE), ")")
+names(entries_tab_0043.0063_decoarsen) <- names(entries_tab_0043)
 
 
 # model with reporting probability 1:
@@ -247,6 +423,26 @@ tab <- rbind(q0043 = entries_tab_0043,
              q1 = entries_tab_1)
 
 
+# model with reporting probability 1, decoarsened:
+# fit model:
+ctrl_1_decoarsen <- ctrl_1
+ctrl_1_decoarsen$decoarsen <- TRUE
+fit_1_decoarsen.0 <- hhh4u(sts_dat, control = ctrl_1_decoarsen)
+ctrl_1_decoarsen$start <- fit_1_decoarsen.0$coefficients
+fit_1_decoarsen <- hhh4u(sts_dat, ctrl_1_decoarsen)
+# get entries for table:
+entries_tab_1_decoarsen <- paste0(format(fit_1_decoarsen$coefficients, digits = 1),
+                        " (", format(fit_1_decoarsen$se, digits = 1, scientific = FALSE), ")")
+names(entries_tab_1_decoarsen) <- names(entries_tab_0043)
+
+tab <- rbind(q0043 = entries_tab_0043,
+             q0043_decoarsen  = entries_tab_0043_decoarsen,
+             q0043.0063 = entries_tab_0043.0063,
+             q0043.0063_decoarsen = entries_tab_0043.0063_decoarsen,
+             q1 = entries_tab_1,
+             q1_decoarsen = entries_tab_1_decoarsen)
+
+
 ##########################################
 # plot of confidence bands:
 
@@ -255,7 +451,7 @@ library(mvtnorm)
 # helper functions for sampling-based computation of confidence bands:
 # for Reff
 sample_quantiles_Reff <- function(fit, n_sim = 10000, probs = c(0.05, 0.95)){
-  samples_par <- rmvnorm(n_sim, fit$coefficients, fit$cov)
+  samples_par <- rmvnorm(n_sim, fit$coefficients[-1], fit$cov[-1, -1]) # leave out lambda1
   samples_Reff <- matrix(ncol = 52, nrow = n_sim)
 
   for(i in 1:n_sim){
@@ -274,7 +470,7 @@ sample_quantiles_Reff <- function(fit, n_sim = 10000, probs = c(0.05, 0.95)){
 
 # for nu:
 sample_quantiles_nu <- function(fit, n_sim = 10000, probs = c(0.05, 0.95)){
-  samples_par <- rmvnorm(n_sim, fit$coefficients, fit$cov)
+  samples_par <- rmvnorm(n_sim, fit$coefficients[-1], fit$cov[-1, -1]) # leave out lambda1
   samples_nu <- matrix(ncol = 52, nrow = n_sim)
 
   for(i in 1:n_sim){
@@ -295,12 +491,24 @@ sample_quantiles_nu <- function(fit, n_sim = 10000, probs = c(0.05, 0.95)){
 set.seed(123)
 
 quantiles_Reff_0043 <- sample_quantiles_Reff(fit_0043)
+quantiles_Reff_0043_decoarsen <- sample_quantiles_Reff(fit_0043_decoarsen)
+
 quantiles_Reff_0043.0063 <- sample_quantiles_Reff(fit_0043.0063)
+quantiles_Reff_0043.0063_decoarsen <- sample_quantiles_Reff(fit_0043.0063_decoarsen)
+
 quantiles_Reff_1 <- sample_quantiles_Reff(fit_1)
+quantiles_Reff_1_decoarsen <- sample_quantiles_Reff(fit_1_decoarsen)
+
 
 quantiles_nu_0043 <- sample_quantiles_nu(fit_0043)
+quantiles_nu_0043_decoarsen <- sample_quantiles_nu(fit_0043_decoarsen)
+
 quantiles_nu_0043.0063 <- sample_quantiles_nu(fit_0043.0063)
+quantiles_nu_0043.0063_decoarsen <- sample_quantiles_nu(fit_0043.0063_decoarsen)
+
 quantiles_nu_1 <- sample_quantiles_nu(fit_1)
+quantiles_nu_1_decoarsen <- sample_quantiles_nu(fit_1_decoarsen)
+
 
 # helper functions for plotting:
 plot_quantiles <- function(quantiles, add = FALSE, col = "black", lwd_point_est = 2,...){
@@ -330,21 +538,29 @@ plot_quantiles_nu <- function(quantiles, add = FALSE, col = "black", lwd_point_e
 # nu:
 par(mfrow = c(1, 2), las = 1, font.main = 1, family = "serif", mar = c(3, 4.5, 1, 1), cex = 0.8)
 
-plot_quantiles_nu(quantiles_nu_0043, xlab = "calendar week",
+# Attention: decoarsened models are on ahalf-weekly scale, we thus need to divide the
+# nu for the ones without de-coarsening by two to ensure comparability in the plot.
+plot_quantiles_nu(quantiles_nu_0043_decoarsen, xlab = "calendar week",
                   ylab = expression(hat(nu)[t]), col = "red",
-                  axes = FALSE, ylim = c(0, 7))
-axis(1); box(); axis(2, at = log(c(1, 2, 5, 10, 20, 50, 100, 250, 500, 1000)), labels = c(1, 2, 5, 10, 20, 50, 100, 250, 500, 1000))
-plot_quantiles_nu(quantiles_nu_1, add = TRUE, col = cols[length(cols)])
-plot_quantiles_nu(quantiles_nu_0043.0063, add = TRUE, col = "darkgreen")
+                  axes = FALSE, ylim = c(-1, 7))
+axis(1, at = c(0, 13, 26, 39, 52), labels = 2*c(0, 13, 26, 39, 52))
+axis(2, at = log(c(1, 2, 5, 10, 20, 50, 100, 250, 500, 1000)),
+                     labels = c(1, 2, 5, 10, 20, 50, 100, 250, 500, 1000))
+plot_quantiles_nu(quantiles_nu_1_decoarsen, add = TRUE, col = cols[length(cols)])
+plot_quantiles_nu(quantiles_nu_0043.0063_decoarsen, add = TRUE, col = "darkgreen")
+# divide by two to have comparable plot:
+plot_quantiles_nu(quantiles_nu_0043/2, add = TRUE, col = "orange")
 
 # Reff:
-plot_quantiles(quantiles_Reff_0043, xlab = "calendar week",
+plot_quantiles(quantiles_Reff_0043_decoarsen, xlab = "calendar week",
                ylab = expression(hat(R)[eff, t]), col = "red",
                axes = FALSE)
 axis(1, at = c(1, 13, 26, 39, 52))
 axis(2); box()
-plot_quantiles(quantiles_Reff_1, add = TRUE, col = cols[length(cols)])
-plot_quantiles(quantiles_Reff_0043.0063, add = TRUE, col = "darkgreen")
+plot_quantiles(quantiles_Reff_1_decoarsen, add = TRUE, col = cols[length(cols)])
+plot_quantiles(quantiles_Reff_0043.0063_decoarsen, add = TRUE, col = "darkgreen")
+plot_quantiles(quantiles_Reff_0043, add = TRUE, col = "orange")
+
 
 legend("top", legend = c(expression(pi==1),
                          expression(pi == 0.043),
