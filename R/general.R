@@ -13,7 +13,7 @@
 #' @examples
 #' sim <- simulate_hhh4u(lambda1 = 1, nu = c(1:5, 4:1), phi = 0.4, kappa = 0.2, psi = 0.1, q = 0.5)
 #' @export
-simulate_hhh4u <- function(lambda1, nu, phi, kappa, psi, q = 1,
+simulate_hhh4u <- function(lambda1, nu, phi, kappa, psi, q = 1, decoarsen = FALSE,
                            lgt = max(sapply(list(nu, phi, kappa, psi, q), length)),
                            return_sts = TRUE, args_sts = list()){
 
@@ -41,6 +41,11 @@ simulate_hhh4u <- function(lambda1, nu, phi, kappa, psi, q = 1,
   }
 
   X_tilde <- rbinom(n = lgt, size = X, prob = q)
+
+  if(decoarsen){
+    X <- coarsen_vector_sum_cpp(X)
+    X_tilde <- coarsen_vector_sum_cpp(X_tilde)
+  }
 
   # return either sts object with observed counts or a named list with the
   # observed and unobserved processes
@@ -361,7 +366,7 @@ hhh4u_R <- function(stsObj,
     }
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
-                       kappa = kappa, psi = psi, q = q)
+                       kappa = kappa, psi = psi, q = q, decoarsen = control$decoarsen)
   ret$par_long_approximation <- pars_Y
 
   # fitted values:
@@ -528,8 +533,8 @@ hhh4u <- function(stsObj,
   q <- control$q
 
   # get corresponding parameters for unthinned process:
-  pars_Y <- reparam_tv(lambda1 = lambda1, nu = nu, phi = phi,
-                       kappa = kappa, psi = psi, q = q)
+  pars_Y <- reparam_tv_cpp(lambda1 = lambda1, nu = nu, phi = phi,
+                       kappa = kappa, psi = psi, q = q, decoarsen = control$decoarsen)
   # compute fitted values:
   lambda <- compute_fitted_values_tv(observed = observed, lambda1_Y = pars_Y$lambda1,
                                      nu = pars_Y$nu, phi = pars_Y$phi, kappa = pars_Y$kappa)
@@ -554,8 +559,10 @@ hhh4u <- function(stsObj,
     }
   }
   ret$par_long <- list(lambda1 = lambda1, nu = nu, phi = phi,
-                       kappa = kappa, psi = psi, q = q)
+                       kappa = kappa, psi = psi, q = q, decoarsen = control$decoarsen)
   ret$par_long_approximation <- pars_Y
+
+  ret$decoarsen <- control$decoarsen
 
   # fitted values:
   ret$fitted.values <- lambda
@@ -771,7 +778,14 @@ print.hhh4u <- function(object){
   if (!object$convergence) {
     cat("Note: optimizer did not converge.\n")
   }
-  cat("Underreported endemic-epidemic model fitted under the assumption q =", object$q, "\n")
+
+  q_to_print <- object$q
+  if(length(unique(q_to_print)) == 1){
+    q_to_print <- q_to_print[1]
+  }
+
+  cat("Underreported endemic-epidemic model fitted under the assumption q =", q_to_print, "\n")
+  if(object$decoarsen) cat("Model is defined at half-weekly time scale, fit accounts for temporal aggregation.\n")
   cat("Coefficients:\n")
   print(object$coefficients)
   cat("Standard errors:\n")
