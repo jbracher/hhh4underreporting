@@ -4,8 +4,17 @@
 \alias{simulate_hhh4u2}
 \title{Simulate from underreported model with time-varying parameters}
 \usage{
-simulate_hhh4u2(lambda1, beta_nu, beta_phi, kappa, psi, q = 1, lgt,
-  z_nu = matrix(rep(1, lgt)), z_phi = matrix(rep(1, lgt)))
+simulate_hhh4u2(
+  lambda1,
+  beta_nu,
+  beta_phi,
+  kappa,
+  psi,
+  q = 1,
+  lgt,
+  z_nu = matrix(rep(1, lgt)),
+  z_phi = matrix(rep(1, lgt))
+)
 }
 \arguments{
 \item{lambda1}{the initial value of lambda}

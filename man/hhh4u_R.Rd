@@ -4,10 +4,13 @@
 \alias{hhh4u_R}
 \title{A slower version of hhh4u using only R code}
 \usage{
-hhh4u_R(stsObj, control = list(ar = list(f = ~-1, use_kappa = TRUE), end
-  = list(f = ~1), family = c("Poisson", "NegBin1"), q = NULL, subset =
-  1:nrow(stsObj), data = list(t = stsObj@epoch - min(stsObj@epoch)), start
-  = NULL, optimizer = list(maxit = 1000), return_se = TRUE))
+hhh4u_R(
+  stsObj,
+  control = list(ar = list(f = ~-1, use_kappa = TRUE), end = list(f = ~1), family =
+    c("Poisson", "NegBin1"), q = NULL, subset = 1:nrow(stsObj), data = list(t =
+    stsObj@epoch - min(stsObj@epoch)), start = NULL, optimizer = list(maxit = 1000),
+    return_se = TRUE)
+)
 }
 \description{
 A slower version of hhh4u using only R code

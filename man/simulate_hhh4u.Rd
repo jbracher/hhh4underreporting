@@ -4,9 +4,18 @@
 \alias{simulate_hhh4u}
 \title{Simulate from underreported model with time-varying parameters}
 \usage{
-simulate_hhh4u(lambda1, nu, phi, kappa, psi, q = 1,
+simulate_hhh4u(
+  lambda1,
+  nu,
+  phi,
+  kappa,
+  psi,
+  q = 1,
+  decoarsen = FALSE,
   lgt = max(sapply(list(nu, phi, kappa, psi, q), length)),
-  return_sts = TRUE, args_sts = list())
+  return_sts = TRUE,
+  args_sts = list()
+)
 }
 \arguments{
 \item{lambda1}{the initial value of lambda}

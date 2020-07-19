@@ -414,6 +414,13 @@ hhh4u_R <- function(stsObj,
 #' estimated from the data (in most cases these contain no information on it) and thus needs to be
 #' specified in advance.
 #'
+#' The fitting function also allows to fit a model which is defined at a half-weekly time scale,
+#' where the observed values represent the sum of two subsequent values of the finer latent process.
+#' This can be activated by setting \code{decoarsen = TRUE}. Note that the frequencies in the \code{end}
+#' and \code{ar} arguments are still interpreted on a weekly scale, i.e. 52 still represents yearly
+#' seasonality (this implementation has been chosen so that the defaut value of 52 does not need to be
+#' adapted if \code{decoarsen = TRUE})
+#'
 #' The likelihood approximation is based on an approximation of the process by a second-order
 #' equivalent process with complete reporting.
 #'
@@ -440,6 +447,8 @@ hhh4u_R <- function(stsObj,
 #' \item \code{q} The assumed reporting probability
 #' \item \code{subset} The subset of the data to which the model shall be fitted; needs to contained within \code{1:nrow(stsObj@observed) }
 #' \item \code{decoarsen} should a correction be applied to fit the model as if it operated on a half-weekly basis?
+#' NOTE: The frequencies in \code{end} and \code{ar} are still defined with respect to the time scale of the
+#' observations, i.e. can be left at 52 for yearly seasonality.
 #' \item \code{start} Initial value passed to \code{optim}; needs to have the correct length and naming.
 #' \item \code{optimize} Additional arguments passed to \code{optim}
 #' \item \code{return_se} Should the standard errors be returned? In case of numerical problems it can be reasonable to deactivate this.

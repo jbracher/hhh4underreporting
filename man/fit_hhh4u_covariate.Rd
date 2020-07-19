@@ -4,9 +4,18 @@
 \alias{fit_hhh4u_covariate}
 \title{Fit an endemic-epidemic model with underreporting and one covariate}
 \usage{
-fit_hhh4u_covariate(Y, q, m1, vl1, covariate, initial = c(alpha_nu = 4,
-  beta_nu = 0, alpha_phi = -1, alpha_kappa = -1, log_psi = -3),
-  max_lag = 10, iter_optim = 3, ...)
+fit_hhh4u_covariate(
+  Y,
+  q,
+  m1,
+  vl1,
+  covariate,
+  initial = c(alpha_nu = 4, beta_nu = 0, alpha_phi = -1, alpha_kappa = -1, log_psi =
+    -3),
+  max_lag = 10,
+  iter_optim = 3,
+  ...
+)
 }
 \arguments{
 \item{Y}{a time series of counts (numeric vector)}

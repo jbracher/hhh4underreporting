@@ -1,7 +1,7 @@
 Package: hhh4underreporting
 Type: Package
 Title: Fitting endemic-epidemic models to underreported data
-Version: 0.0.0.0.9001
+Version: 0.0.0.0.9002
 Author: Johannes Bracher [aut, cre]
 Maintainer: Johannes Bracher <johannes.bracher@uzh.ch>
 Description: The main purpose of this package is reproducibility of Bracher/Held 2019+
@@ -15,4 +15,4 @@ Imports:
 Depends:
     surveillance
 LinkingTo: Rcpp
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0

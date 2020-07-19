@@ -4,8 +4,7 @@
 \alias{simulate_hhh4u_covariate}
 \title{Simulate from underreported model with one covariate}
 \usage{
-simulate_hhh4u_covariate(lambda1, alpha_nu, beta_nu, phi, kappa, psi,
-  q = 1, z)
+simulate_hhh4u_covariate(lambda1, alpha_nu, beta_nu, phi, kappa, psi, q = 1, z)
 }
 \arguments{
 \item{lambda1}{the initial mean}

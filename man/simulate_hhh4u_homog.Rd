@@ -4,8 +4,16 @@
 \alias{simulate_hhh4u_homog}
 \title{Simulate from time-homogeneous underreported model}
 \usage{
-simulate_hhh4u_homog(nu, phi, kappa, psi, q = 1, lgt = 100,
-  start = 10, burn_in = 1000)
+simulate_hhh4u_homog(
+  nu,
+  phi,
+  kappa,
+  psi,
+  q = 1,
+  lgt = 100,
+  start = 10,
+  burn_in = 1000
+)
 }
 \arguments{
 \item{nu, phi, kappa, psi}{the model parameters (scalars)}

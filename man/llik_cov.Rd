@@ -5,8 +5,18 @@
 \title{Evaluate the approximate log-likelihood of an underreported endemic-epidemic
 model with time-varying parameters}
 \usage{
-llik_cov(Y, m1, vl1, nu, phi, kappa, psi, q, max_lag = 5,
-  return_contributions = FALSE)
+llik_cov(
+  Y,
+  m1,
+  vl1,
+  nu,
+  phi,
+  kappa,
+  psi,
+  q,
+  max_lag = 5,
+  return_contributions = FALSE
+)
 }
 \arguments{
 \item{Y}{a time series of counts (numeric vector)}

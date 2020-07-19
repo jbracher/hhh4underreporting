@@ -4,8 +4,16 @@
 \alias{nllik_homog}
 \title{Evaluate the approximate log-likelihood of a time-homogeneous underreported endemic-epidemic model}
 \usage{
-nllik_homog(observed, nu, phi, kappa, psi, q, max_lag = 5,
-  return_contributions = FALSE)
+nllik_homog(
+  observed,
+  nu,
+  phi,
+  kappa,
+  psi,
+  q,
+  max_lag = 5,
+  return_contributions = FALSE
+)
 }
 \arguments{
 \item{observed}{a time series of counts (numeric vector)}

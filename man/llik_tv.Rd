@@ -4,8 +4,17 @@
 \alias{llik_tv}
 \title{Evaluate the (approximate) likelihood of an underreported model}
 \usage{
-llik_tv(observed, lambda1, nu, phi, kappa, psi, q,
-  return_contributions = FALSE, log = TRUE)
+llik_tv(
+  observed,
+  lambda1,
+  nu,
+  phi,
+  kappa,
+  psi,
+  q,
+  return_contributions = FALSE,
+  log = TRUE
+)
 }
 \arguments{
 \item{observed}{The observed sequence of counts}

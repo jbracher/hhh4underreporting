@@ -8,10 +8,18 @@ a second-order equivalent process with complete reporting. The reporting probabi
 estimated from the data (in most cases these contain no information on it) and thus needs to be
 specified in advance.}
 \usage{
-fit_hhh4u_seasonal(observed, L, q, seas_phi = FALSE,
-  include_kappa = TRUE, initial = c(alpha_nu = 4, gamma_nu = 0,
-  delta_nu = 0, alpha_phi = -1, gamma_phi = 0, delta_phi = 0, alpha_kappa =
-  -1, log_psi = -3), max_lag = 10, iter_optim = 3, ...)
+fit_hhh4u_seasonal(
+  observed,
+  L,
+  q,
+  seas_phi = FALSE,
+  include_kappa = TRUE,
+  initial = c(alpha_nu = 4, gamma_nu = 0, delta_nu = 0, alpha_phi = -1, gamma_phi = 0,
+    delta_phi = 0, alpha_kappa = -1, log_psi = -3),
+  max_lag = 10,
+  iter_optim = 3,
+  ...
+)
 }
 \arguments{
 \item{observed}{a time series of counts (numeric vector)}

@@ -4,8 +4,7 @@
 \alias{fit_jags}
 \title{Bayesian fitting of a time-homogeneous underreported endemic-epidemic model using JAGS}
 \usage{
-fit_jags(Y, p, n.chains = 5, n.iter = 10000, n.burnin = 1000,
-  n.thin = 10, ...)
+fit_jags(Y, p, n.chains = 5, n.iter = 10000, n.burnin = 1000, n.thin = 10, ...)
 }
 \arguments{
 \item{Y}{a time series of counts (numeric vector)}

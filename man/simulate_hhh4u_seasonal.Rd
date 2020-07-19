@@ -4,9 +4,21 @@
 \alias{simulate_hhh4u_seasonal}
 \title{Simulate from seasonal underreported model}
 \usage{
-simulate_hhh4u_seasonal(alpha_nu, gamma_nu, delta_nu, alpha_phi, gamma_phi,
-  delta_phi, kappa, psi, q = 1, L = 52, n_seas = 10, start = 10,
-  burn_in = 10)
+simulate_hhh4u_seasonal(
+  alpha_nu,
+  gamma_nu,
+  delta_nu,
+  alpha_phi,
+  gamma_phi,
+  delta_phi,
+  kappa,
+  psi,
+  q = 1,
+  L = 52,
+  n_seas = 10,
+  start = 10,
+  burn_in = 10
+)
 }
 \arguments{
 \item{alpha_nu, gamma_nu, delta_nu, alpha_phi, gamma_phi, delta_phi, kappa, psi}{the model parameters}

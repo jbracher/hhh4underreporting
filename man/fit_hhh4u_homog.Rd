@@ -4,9 +4,16 @@
 \alias{fit_hhh4u_homog}
 \title{Fitting time-homogeneous underreported endemic-epidemic model using maximum likelihood}
 \usage{
-fit_hhh4u_homog(observed, q, include_kappa = TRUE, initial = c(log_nu =
-  2, log_phi = -1, log_kappa = -2, log_psi = -3), max_lag = 5,
-  iter_optim = 3, hessian = TRUE, ...)
+fit_hhh4u_homog(
+  observed,
+  q,
+  include_kappa = TRUE,
+  initial = c(log_nu = 2, log_phi = -1, log_kappa = -2, log_psi = -3),
+  max_lag = 5,
+  iter_optim = 3,
+  hessian = TRUE,
+  ...
+)
 }
 \arguments{
 \item{observed}{a time series of counts (numeric vector)}

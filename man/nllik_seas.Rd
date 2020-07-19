@@ -4,9 +4,21 @@
 \alias{nllik_seas}
 \title{Evaluate the approximate negative log-likelihood of a seasonal underreported endemic-epidemic model}
 \usage{
-nllik_seas(observed, alpha_nu, gamma_nu, delta_nu, alpha_phi,
-  gamma_phi = 0, delta_phi = 0, alpha_kappa, psi, q, L, max_lag = 5,
-  return_contributions = FALSE)
+nllik_seas(
+  observed,
+  alpha_nu,
+  gamma_nu,
+  delta_nu,
+  alpha_phi,
+  gamma_phi = 0,
+  delta_phi = 0,
+  alpha_kappa,
+  psi,
+  q,
+  L,
+  max_lag = 5,
+  return_contributions = FALSE
+)
 }
 \arguments{
 \item{observed}{a time series of counts (numeric vector)}
